@@ -20,8 +20,12 @@ const predictionSchema = z.object({
 });
 
 function requireAdminPin(formData: FormData) {
-  const expected = process.env.ADMIN_PIN ?? "1234";
+  const expected = process.env.ADMIN_PIN;
   const received = String(formData.get("adminPin") ?? "");
+
+  if (!expected) {
+    throw new Error("Falta configurar ADMIN_PIN en el servidor.");
+  }
 
   if (received !== expected) {
     throw new Error("PIN de organizador incorrecto.");

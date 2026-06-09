@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Polla Mundialista
 
-## Getting Started
+Sistema web para administrar una polla mundialista privada: inscripciones, pagos manuales, pronosticos, resultados, puntaje y ranking.
 
-First, run the development server:
+## Reglas actuales
+
+- Inscripcion: S/10.
+- Marcador exacto: 2 puntos.
+- Resultado correcto: 1 punto.
+- Error: 0 puntos.
+- Premio ganador: 50% del pozo acumulado.
+- Organizador: 50% del pozo acumulado.
+
+## Desarrollo local
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env
+npm run db:generate
+npm run db:init
+npm run db:seed
+npm run dev -- -H 0.0.0.0 -p 3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre `http://localhost:3001`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Datos demo:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Codigo participante: `DEMO2026`
+- PIN organizador local: el valor de `ADMIN_PIN` en `.env`
 
-## Learn More
+## Variables
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+DATABASE_URL="file:./dev.db"
+ADMIN_PIN="pon-un-pin-largo"
+API_FOOTBALL_KEY=""
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`API_FOOTBALL_KEY` habilita la sincronizacion desde API-Football. El adaptador actual consulta Mundial 2026 con `league=1&season=2026`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Despliegue Docker
 
-## Deploy on Vercel
+```bash
+export ADMIN_PIN="pon-un-pin-largo"
+export API_FOOTBALL_KEY="opcional"
+docker compose up -d --build
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+La base SQLite de produccion queda en el volumen `polla_data`.
+El contenedor inicializa el esquema con `prisma/init.sql` antes de arrancar.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Pendientes antes de produccion abierta
+
+- Validar encuadre legal antes de cobrar o promocionar masivamente.
+- Cambiar `ADMIN_PIN` por autenticacion completa.
+- Definir desempates oficiales antes del primer partido.
+- Configurar dominio, SSL, backups y monitoreo.

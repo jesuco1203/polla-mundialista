@@ -6,11 +6,11 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: "file:/data/prod.db"
-      ADMIN_PIN: "${ADMIN_PIN:-1234}"
+      ADMIN_PIN: "${ADMIN_PIN:?Configura ADMIN_PIN antes de desplegar}"
       API_FOOTBALL_KEY: "${API_FOOTBALL_KEY:-}"
     volumes:
       - polla_data:/data
-    command: sh -c "npx prisma db push && npm run start"
+    command: sh -c "sqlite3 /data/prod.db < prisma/init.sql && npm run start"
 
 volumes:
   polla_data:
