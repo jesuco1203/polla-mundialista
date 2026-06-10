@@ -153,6 +153,7 @@ export default async function Home() {
   const nextMatches = matches.filter((match) => match.status !== "FINISHED").slice(0, 8);
   const openMatches = nextMatches.filter((match) => match.startsAt > now);
   const finishedMatches = matches.filter((match) => match.status === "FINISHED");
+  const featuredMatch = openMatches[0] ?? nextMatches[0];
   const nextClose = openMatches[0]?.startsAt;
 
   return (
@@ -180,21 +181,46 @@ export default async function Home() {
             </div>
           </div>
 
-          <aside className="hero-card">
-            <div className="hero-card-top">
-              <ShieldCheck size={20} />
-              <span>Reglas simples y visibles</span>
+          <aside className="hero-board" aria-label="Resumen destacado">
+            <div className="hero-board-header">
+              <span>Proximo cierre</span>
+              <strong>
+                {nextClose
+                  ? new Intl.DateTimeFormat("es-PE", {
+                      day: "2-digit",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }).format(nextClose)
+                  : "Sin fixture"}
+              </strong>
             </div>
-            <dl>
+
+            <div className="scoreboard">
               <div>
+                <TeamMark name={featuredMatch?.homeTeam ?? "Local"} />
+                <span>{featuredMatch?.homeTeam ?? "Local"}</span>
+              </div>
+              <strong>VS</strong>
+              <div>
+                <TeamMark name={featuredMatch?.awayTeam ?? "Visitante"} />
+                <span>{featuredMatch?.awayTeam ?? "Visitante"}</span>
+              </div>
+            </div>
+
+            <dl className="rules-grid">
+              <div>
+                <ShieldCheck size={16} />
                 <dt>Inscripcion</dt>
                 <dd>{formatMoney(config.entryFeeCents, config.currency)}</dd>
               </div>
               <div>
+                <Medal size={16} />
                 <dt>Marcador exacto</dt>
                 <dd>2 pts</dd>
               </div>
               <div>
+                <BadgeCheck size={16} />
                 <dt>Resultado correcto</dt>
                 <dd>1 pt</dd>
               </div>
