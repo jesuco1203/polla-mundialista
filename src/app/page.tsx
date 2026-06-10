@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import {
+  createMatch,
   markPayment,
   registerParticipant,
   savePrediction,
@@ -339,6 +340,47 @@ export default async function Home() {
                 </form>
               ))}
             </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel-header">
+              <div>
+                <h2>Cargar partido</h2>
+                <p>Fallback manual cuando la API aun no tiene fixture completo.</p>
+              </div>
+            </div>
+            <form action={createMatch} className="stacked-form">
+              <div className="score-inputs">
+                <label>
+                  Etapa
+                  <input name="stage" placeholder="Grupo A" required />
+                </label>
+                <label>
+                  Grupo
+                  <input name="groupName" placeholder="A" />
+                </label>
+              </div>
+              <label>
+                Equipo local
+                <input name="homeTeam" placeholder="Mexico" required />
+              </label>
+              <label>
+                Equipo visitante
+                <input name="awayTeam" placeholder="Sudafrica" required />
+              </label>
+              <label>
+                Fecha y hora
+                <input name="startsAt" type="datetime-local" required />
+              </label>
+              <label>
+                Sede opcional
+                <input name="venue" placeholder="Estadio" />
+              </label>
+              <input name="adminPin" type="password" placeholder="PIN organizador" required />
+              <button className="primary-button" type="submit">
+                Crear partido
+              </button>
+            </form>
           </div>
 
           <div className="panel">

@@ -19,6 +19,15 @@ const predictionSchema = z.object({
   awayScore: z.coerce.number().int().min(0).max(30),
 });
 
+const matchSchema = z.object({
+  stage: z.string().trim().min(2).max(80),
+  groupName: z.string().trim().max(10).optional().or(z.literal("")),
+  homeTeam: z.string().trim().min(2).max(80),
+  awayTeam: z.string().trim().min(2).max(80),
+  startsAt: z.string().trim().min(10),
+  venue: z.string().trim().max(120).optional().or(z.literal("")),
+});
+
 function requireAdminPin(formData: FormData) {
   const expected = process.env.ADMIN_PIN;
   const received = String(formData.get("adminPin") ?? "");
@@ -120,6 +129,37 @@ export async function markPayment(formData: FormData) {
     data: {
       paymentStatus,
       paymentNote: paymentNote || null,
+    },
+  });
+
+  revalidatePath("/");
+}
+
+export async function createMatch(formData: FormData) {
+  requireAdminPin(formData);
+
+  const parsed = matchSchema.parse({
+    stage: formData.get("stage"),
+    groupName: formData.get("groupName"),
+    homeTeam: formData.get("homeTeam"),
+    awayTeam: formData.get("awayTeam"),
+    startsAt: formData.get("startsAt"),
+    venue: formData.get("venue"),
+  });
+
+  const startsAt = new Date(parsed.startsAt);
+  if (Number.isNaN(startsAt.getTime())) {
+    throw new Error("Fecha de partido invalida.");
+  }
+
+  await prisma.match.create({
+    data: {
+      stage: parsed.stage,
+      groupName: parsed.groupName || null,
+      homeTeam: parsed.homeTeam,
+      awayTeam: parsed.awayTeam,
+      startsAt,
+      venue: parsed.venue || null,
     },
   });
 
