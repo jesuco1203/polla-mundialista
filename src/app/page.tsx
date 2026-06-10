@@ -1,13 +1,16 @@
 import {
   BadgeCheck,
   CalendarClock,
+  ChevronRight,
   CircleDollarSign,
   ClipboardList,
+  Clock3,
   Lock,
   Medal,
   RefreshCcw,
   ShieldCheck,
   Trophy,
+  UserPlus,
   Users,
 } from "lucide-react";
 import {
@@ -48,8 +51,14 @@ async function getDashboardData() {
         0,
       ),
       predictedMatches: participant.predictions.length,
+      exactHits: participant.predictions.filter((prediction) => prediction.points === 2).length,
     }))
-    .sort((a, b) => b.totalPoints - a.totalPoints || b.predictedMatches - a.predictedMatches);
+    .sort(
+      (a, b) =>
+        b.totalPoints - a.totalPoints ||
+        b.exactHits - a.exactHits ||
+        b.predictedMatches - a.predictedMatches,
+    );
 
   return {
     config: config ?? {
@@ -95,195 +104,227 @@ function StatusPill({ status }: { status: string }) {
   return <span className={`status-pill status-${status.toLowerCase()}`}>{label}</span>;
 }
 
+function TeamMark({ name }: { name: string }) {
+  const initials = name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase();
+
+  return <span className="team-mark" aria-hidden="true">{initials || "?"}</span>;
+}
+
+function MatchState({ locked }: { locked: boolean }) {
+  return (
+    <span className={locked ? "match-state closed" : "match-state open"}>
+      {locked ? <Lock size={14} /> : <Clock3 size={14} />}
+      {locked ? "Bloqueado" : "Abierto"}
+    </span>
+  );
+}
+
+function SectionTitle({
+  eyebrow,
+  title,
+  description,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="section-title">
+      <p>{eyebrow}</p>
+      <h2>{title}</h2>
+      <span>{description}</span>
+    </div>
+  );
+}
+
 export default async function Home() {
   const { config, participants, matches, leaderboard } = await getDashboardData();
   const paidParticipants = participants.filter((participant) => participant.paymentStatus === "PAID");
   const potCents = paidParticipants.length * config.entryFeeCents;
   const winnerCents = Math.floor((potCents * config.winnerShare) / 100);
   const organizerCents = potCents - winnerCents;
-  const nextMatches = matches.filter((match) => match.status !== "FINISHED").slice(0, 6);
+  const now = new Date();
+  const nextMatches = matches.filter((match) => match.status !== "FINISHED").slice(0, 8);
+  const openMatches = nextMatches.filter((match) => match.startsAt > now);
   const finishedMatches = matches.filter((match) => match.status === "FINISHED");
+  const nextClose = openMatches[0]?.startsAt;
 
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
-      <section className="border-b border-[var(--border)] bg-[var(--surface)]">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-8 sm:px-6 lg:px-8">
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <div className="eyebrow">
-                <Trophy size={16} />
-                Mundial 2026
-              </div>
-              <h1 className="mt-3 text-3xl font-semibold tracking-normal text-[var(--foreground)] sm:text-5xl">
-                Polla Mundialista
-              </h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-[var(--muted-foreground)]">
-                Registro, control de pagos, pronosticos bloqueados por hora de partido,
-                puntaje automatico y ranking final en un solo panel.
-              </p>
+      <section className="hero-shell">
+        <div className="hero-grid">
+          <div className="hero-copy">
+            <div className="eyebrow">
+              <Trophy size={16} />
+              Mundial 2026
             </div>
-            <div className="rule-box">
-              <ShieldCheck size={18} />
-              <span>S/10 inscripcion · 1 punto resultado · 2 puntos marcador exacto · premio 50%</span>
+            <h1>Participa en la polla del Mundial 2026</h1>
+            <p>
+              Pronostica marcadores, compite por puntos y sigue el pozo en vivo.
+              La inscripcion es de S/10 y el premio al ganador es el 50% del acumulado.
+            </p>
+            <div className="hero-actions">
+              <a href="#participante" className="primary-link">
+                Pronosticar ahora
+                <ChevronRight size={18} />
+              </a>
+              <a href="#registro" className="ghost-link">
+                Registrarme
+              </a>
             </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <StatCard
-              icon={<Users size={20} />}
-              label="Participantes pagados"
-              value={`${paidParticipants.length}`}
-              detail={`${participants.length} registrados en total`}
-            />
-            <StatCard
-              icon={<CircleDollarSign size={20} />}
-              label="Pozo acumulado"
-              value={formatMoney(potCents, config.currency)}
-              detail={`${formatMoney(config.entryFeeCents, config.currency)} por inscripcion`}
-            />
-            <StatCard
-              icon={<Medal size={20} />}
-              label="Premio ganador"
-              value={formatMoney(winnerCents, config.currency)}
-              detail={`${config.winnerShare}% del pozo`}
-            />
-            <StatCard
-              icon={<ClipboardList size={20} />}
-              label="Organizador"
-              value={formatMoney(organizerCents, config.currency)}
-              detail={`${config.organizerShare}% del pozo`}
-            />
-          </div>
+          <aside className="hero-card">
+            <div className="hero-card-top">
+              <ShieldCheck size={20} />
+              <span>Reglas simples y visibles</span>
+            </div>
+            <dl>
+              <div>
+                <dt>Inscripcion</dt>
+                <dd>{formatMoney(config.entryFeeCents, config.currency)}</dd>
+              </div>
+              <div>
+                <dt>Marcador exacto</dt>
+                <dd>2 pts</dd>
+              </div>
+              <div>
+                <dt>Resultado correcto</dt>
+                <dd>1 pt</dd>
+              </div>
+            </dl>
+          </aside>
         </div>
       </section>
 
-      <div className="mx-auto grid w-full max-w-7xl gap-5 px-4 py-6 sm:px-6 lg:grid-cols-[1fr_380px] lg:px-8">
-        <section className="space-y-5">
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h2>Tabla de posiciones</h2>
-                <p>Ordenada por puntos acumulados y cantidad de pronosticos registrados.</p>
-              </div>
-              <BadgeCheck className="text-[var(--accent)]" size={22} />
-            </div>
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Participante</th>
-                    <th>Codigo</th>
-                    <th>Pronosticos</th>
-                    <th>Puntos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaderboard.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="empty-cell">
-                        Aun no hay participantes pagados.
-                      </td>
-                    </tr>
-                  ) : (
-                    leaderboard.map((participant, index) => (
-                      <tr key={participant.id}>
-                        <td>{index + 1}</td>
-                        <td className="font-medium text-[var(--foreground)]">{participant.name}</td>
-                        <td>{participant.accessCode}</td>
-                        <td>{participant.predictedMatches}</td>
-                        <td className="score-cell">{participant.totalPoints}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+      <nav className="view-tabs" aria-label="Vistas principales">
+        <a href="#participante">Participante</a>
+        <a href="#ranking">Ranking</a>
+        <a href="#organizador">Organizador</a>
+      </nav>
 
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h2>Pronosticar partidos</h2>
-                <p>Solo se aceptan pronosticos de participantes con pago confirmado.</p>
-              </div>
-              <Lock className="text-[var(--accent)]" size={22} />
+      <section className="kpi-strip" aria-label="Resumen de la polla">
+        <StatCard
+          icon={<Users size={20} />}
+          label="Inscritos pagados"
+          value={`${paidParticipants.length}`}
+          detail={`${participants.length} registros totales`}
+        />
+        <StatCard
+          icon={<CircleDollarSign size={20} />}
+          label="Pozo acumulado"
+          value={formatMoney(potCents, config.currency)}
+          detail="Actualizado con pagos confirmados"
+        />
+        <StatCard
+          icon={<Medal size={20} />}
+          label="Premio al ganador"
+          value={formatMoney(winnerCents, config.currency)}
+          detail={`${config.winnerShare}% del pozo`}
+        />
+        <StatCard
+          icon={<CalendarClock size={20} />}
+          label="Cierre proximo"
+          value={
+            nextClose
+              ? new Intl.DateTimeFormat("es-PE", {
+                  day: "2-digit",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }).format(nextClose)
+              : "Sin partidos"
+          }
+          detail="Pronostico bloqueado al iniciar"
+        />
+      </section>
+
+      <div className="app-shell">
+        <section className="participant-layout" id="participante">
+          <div className="participant-main">
+            <SectionTitle
+              eyebrow="Participante"
+              title="Partidos abiertos"
+              description="Ingresa tu codigo, marca el score y guarda antes del inicio."
+            />
+
+            <div className="notice">
+              <BadgeCheck size={18} />
+              <span>Para pronosticar, tu pago debe figurar como confirmado por el organizador.</span>
             </div>
+
             <div className="match-grid">
               {nextMatches.length === 0 ? (
                 <p className="empty-text">No hay partidos pendientes cargados.</p>
               ) : (
-                nextMatches.map((match) => (
-                  <form action={savePrediction} className="match-card" key={match.id}>
-                    <div>
-                      <p className="match-stage">{match.stage}</p>
-                      <h3>
-                        {match.homeTeam} <span>vs</span> {match.awayTeam}
-                      </h3>
+                nextMatches.map((match) => {
+                  const locked = match.startsAt <= now;
+
+                  return (
+                    <form action={savePrediction} className="match-card" key={match.id}>
+                      <div className="match-topline">
+                        <span className="match-badge">{match.groupName ? `Grupo ${match.groupName}` : match.stage}</span>
+                        <MatchState locked={locked} />
+                      </div>
+
+                      <div className="teams-row">
+                        <div className="team-side">
+                          <TeamMark name={match.homeTeam} />
+                          <strong>{match.homeTeam}</strong>
+                        </div>
+                        <span className="versus">vs</span>
+                        <div className="team-side right">
+                          <strong>{match.awayTeam}</strong>
+                          <TeamMark name={match.awayTeam} />
+                        </div>
+                      </div>
+
                       <p className="match-date">
                         {new Intl.DateTimeFormat("es-PE", {
                           dateStyle: "medium",
                           timeStyle: "short",
                         }).format(match.startsAt)}
+                        {match.venue ? ` · ${match.venue}` : ""}
                       </p>
-                    </div>
-                    <input type="hidden" name="matchId" value={match.id} />
-                    <label>
-                      Codigo del participante
-                      <input name="accessCode" placeholder="DEMO2026" required />
-                    </label>
-                    <div className="score-inputs">
+
+                      <input type="hidden" name="matchId" value={match.id} />
                       <label>
-                        {match.homeTeam}
-                        <input name="homeScore" type="number" min="0" max="30" defaultValue="1" required />
+                        Ingresa tu codigo
+                        <input name="accessCode" placeholder="DEMO2026" required disabled={locked} />
                       </label>
-                      <label>
-                        {match.awayTeam}
-                        <input name="awayScore" type="number" min="0" max="30" defaultValue="0" required />
-                      </label>
-                    </div>
-                    <button className="primary-button" type="submit">
-                      Guardar pronostico
-                    </button>
-                  </form>
-                ))
+                      <div className="score-inputs compact">
+                        <label>
+                          Local
+                          <input name="homeScore" type="number" min="0" max="30" defaultValue="1" required disabled={locked} />
+                        </label>
+                        <label>
+                          Visitante
+                          <input name="awayScore" type="number" min="0" max="30" defaultValue="0" required disabled={locked} />
+                        </label>
+                      </div>
+                      <button className="primary-button" type="submit" disabled={locked}>
+                        {locked ? "Pronostico cerrado" : "Guardar pronostico"}
+                      </button>
+                    </form>
+                  );
+                })
               )}
             </div>
           </div>
 
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h2>Partidos finalizados</h2>
-                <p>Resultados con puntajes recalculados.</p>
-              </div>
-              <CalendarClock className="text-[var(--accent)]" size={22} />
-            </div>
-            <div className="compact-list">
-              {finishedMatches.length === 0 ? (
-                <p className="empty-text">Aun no hay resultados cerrados.</p>
-              ) : (
-                finishedMatches.map((match) => (
-                  <div className="compact-row" key={match.id}>
-                    <span>{match.homeTeam}</span>
-                    <strong>
-                      {match.homeScore} - {match.awayScore}
-                    </strong>
-                    <span>{match.awayTeam}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </section>
-
-        <aside className="space-y-5">
-          <div className="panel">
+          <aside className="register-panel" id="registro">
             <div className="panel-header">
               <div>
                 <h2>Inscripcion</h2>
-                <p>El codigo se genera al registrar y se activa cuando el pago se confirma.</p>
+                <p>Registrate y envia tu comprobante. El codigo se activa con pago confirmado.</p>
               </div>
+              <UserPlus className="text-[var(--accent)]" size={22} />
             </div>
             <form action={registerParticipant} className="stacked-form">
               <label>
@@ -299,129 +340,224 @@ export default async function Home() {
                 <input name="email" type="email" placeholder="correo@dominio.com" />
               </label>
               <button className="primary-button" type="submit">
-                Registrar participante
+                Registrarme
               </button>
             </form>
-          </div>
+          </aside>
+        </section>
 
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h2>Panel organizador</h2>
-                <p>Usa el PIN del servidor para pagos, resultados y sincronizacion.</p>
-              </div>
+        <section className="ranking-section" id="ranking">
+          <SectionTitle
+            eyebrow="Competencia"
+            title="Ranking general"
+            description="Gana quien acumule mas puntos al terminar el Mundial."
+          />
+          <div className="leaderboard-panel">
+            <div className="overflow-x-auto">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Participante</th>
+                    <th>Codigo</th>
+                    <th>Exactos</th>
+                    <th>Pronosticos</th>
+                    <th>Puntos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaderboard.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="empty-cell">
+                        Aun no hay participantes pagados.
+                      </td>
+                    </tr>
+                  ) : (
+                    leaderboard.map((participant, index) => (
+                      <tr key={participant.id}>
+                        <td>{index + 1}</td>
+                        <td className="font-medium text-[var(--foreground)]">{participant.name}</td>
+                        <td>{participant.accessCode}</td>
+                        <td>{participant.exactHits}</td>
+                        <td>{participant.predictedMatches}</td>
+                        <td className="score-cell">{participant.totalPoints}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
             </div>
-            <form action={syncMatches} className="admin-inline">
-              <input name="adminPin" type="password" placeholder="PIN" required />
-              <button className="secondary-button" type="submit">
-                <RefreshCcw size={16} />
-                Sincronizar API
-              </button>
-            </form>
-            <div className="participant-list">
-              {participants.map((participant) => (
-                <form action={markPayment} className="participant-row" key={participant.id}>
-                  <input type="hidden" name="participantId" value={participant.id} />
+          </div>
+        </section>
+
+        <section className="admin-zone" id="organizador">
+          <SectionTitle
+            eyebrow="Zona privada"
+            title="Organizador"
+            description="Gestiona pagos, sincroniza fixture, carga partidos y cierra resultados."
+          />
+
+          <details className="admin-disclosure">
+            <summary>
+              <span>
+                <Lock size={18} />
+                Abrir panel organizador
+              </span>
+              <small>Requiere PIN en cada accion</small>
+            </summary>
+
+            <div className="admin-grid">
+              <div className="admin-card">
+                <div className="panel-header">
                   <div>
-                    <strong>{participant.name}</strong>
-                    <span>{participant.phone} · {participant.accessCode}</span>
-                    <StatusPill status={participant.paymentStatus} />
+                    <h2>Pagos y API</h2>
+                    <p>Actualiza estados y sincroniza partidos reales cuando tengas la llave.</p>
                   </div>
-                  <select name="paymentStatus" defaultValue={participant.paymentStatus}>
-                    <option value="PENDING">Pendiente</option>
-                    <option value="PAID">Pagado</option>
-                    <option value="REJECTED">Observado</option>
-                  </select>
-                  <input name="paymentNote" placeholder="Nota pago" defaultValue={participant.paymentNote ?? ""} />
+                  <Lock className="text-[var(--accent)]" size={22} />
+                </div>
+                <form action={syncMatches} className="admin-inline">
                   <input name="adminPin" type="password" placeholder="PIN" required />
                   <button className="secondary-button" type="submit">
-                    Actualizar
+                    <RefreshCcw size={16} />
+                    Sincronizar API
                   </button>
                 </form>
-              ))}
-            </div>
-          </div>
+                <div className="participant-list">
+                  {participants.map((participant) => (
+                    <form action={markPayment} className="participant-row" key={participant.id}>
+                      <input type="hidden" name="participantId" value={participant.id} />
+                      <div>
+                        <strong>{participant.name}</strong>
+                        <span>{participant.phone} · {participant.accessCode}</span>
+                        <StatusPill status={participant.paymentStatus} />
+                      </div>
+                      <select name="paymentStatus" defaultValue={participant.paymentStatus}>
+                        <option value="PENDING">Pendiente</option>
+                        <option value="PAID">Pagado</option>
+                        <option value="REJECTED">Observado</option>
+                      </select>
+                      <input name="paymentNote" placeholder="Nota pago" defaultValue={participant.paymentNote ?? ""} />
+                      <input name="adminPin" type="password" placeholder="PIN" required />
+                      <button className="secondary-button" type="submit">
+                        Actualizar
+                      </button>
+                    </form>
+                  ))}
+                </div>
+              </div>
 
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h2>Cargar partido</h2>
-                <p>Fallback manual cuando la API aun no tiene fixture completo.</p>
-              </div>
-            </div>
-            <form action={createMatch} className="stacked-form">
-              <div className="score-inputs">
-                <label>
-                  Etapa
-                  <input name="stage" placeholder="Grupo A" required />
-                </label>
-                <label>
-                  Grupo
-                  <input name="groupName" placeholder="A" />
-                </label>
-              </div>
-              <label>
-                Equipo local
-                <input name="homeTeam" placeholder="Mexico" required />
-              </label>
-              <label>
-                Equipo visitante
-                <input name="awayTeam" placeholder="Sudafrica" required />
-              </label>
-              <label>
-                Fecha y hora
-                <input name="startsAt" type="datetime-local" required />
-              </label>
-              <label>
-                Sede opcional
-                <input name="venue" placeholder="Estadio" />
-              </label>
-              <input name="adminPin" type="password" placeholder="PIN organizador" required />
-              <button className="primary-button" type="submit">
-                Crear partido
-              </button>
-            </form>
-          </div>
-
-          <div className="panel">
-            <div className="panel-header">
-              <div>
-                <h2>Cerrar resultado</h2>
-                <p>Al guardar, se recalculan los puntos del partido.</p>
-              </div>
-            </div>
-            <div className="result-list">
-              {matches.slice(0, 8).map((match) => (
-                <form action={updateMatchResult} className="result-row" key={match.id}>
-                  <input type="hidden" name="matchId" value={match.id} />
-                  <p>{match.homeTeam} vs {match.awayTeam}</p>
-                  <div className="score-inputs">
-                    <input
-                      aria-label={`Goles ${match.homeTeam}`}
-                      name="homeScore"
-                      type="number"
-                      min="0"
-                      max="30"
-                      defaultValue={match.homeScore ?? 0}
-                      required
-                    />
-                    <input
-                      aria-label={`Goles ${match.awayTeam}`}
-                      name="awayScore"
-                      type="number"
-                      min="0"
-                      max="30"
-                      defaultValue={match.awayScore ?? 0}
-                      required
-                    />
+              <div className="admin-card">
+                <div className="panel-header">
+                  <div>
+                    <h2>Cargar partido</h2>
+                    <p>Fallback manual cuando la API aun no tiene fixture completo.</p>
                   </div>
-                  <input name="adminPin" type="password" placeholder="PIN" required />
-                  <button className="secondary-button" type="submit">Guardar</button>
+                </div>
+                <form action={createMatch} className="stacked-form">
+                  <div className="score-inputs">
+                    <label>
+                      Etapa
+                      <input name="stage" placeholder="Grupo A" required />
+                    </label>
+                    <label>
+                      Grupo
+                      <input name="groupName" placeholder="A" />
+                    </label>
+                  </div>
+                  <label>
+                    Equipo local
+                    <input name="homeTeam" placeholder="Mexico" required />
+                  </label>
+                  <label>
+                    Equipo visitante
+                    <input name="awayTeam" placeholder="Sudafrica" required />
+                  </label>
+                  <label>
+                    Fecha y hora
+                    <input name="startsAt" type="datetime-local" required />
+                  </label>
+                  <label>
+                    Sede opcional
+                    <input name="venue" placeholder="Estadio" />
+                  </label>
+                  <input name="adminPin" type="password" placeholder="PIN organizador" required />
+                  <button className="primary-button" type="submit">
+                    Crear partido
+                  </button>
                 </form>
-              ))}
+              </div>
+
+              <div className="admin-card">
+                <div className="panel-header">
+                  <div>
+                    <h2>Cerrar resultado</h2>
+                    <p>Al guardar, se recalculan los puntos del partido.</p>
+                  </div>
+                  <ClipboardList className="text-[var(--accent)]" size={22} />
+                </div>
+                <div className="result-list">
+                  {matches.slice(0, 10).map((match) => (
+                    <form action={updateMatchResult} className="result-row" key={match.id}>
+                      <input type="hidden" name="matchId" value={match.id} />
+                      <p>{match.homeTeam} vs {match.awayTeam}</p>
+                      <div className="score-inputs">
+                        <input
+                          aria-label={`Goles ${match.homeTeam}`}
+                          name="homeScore"
+                          type="number"
+                          min="0"
+                          max="30"
+                          defaultValue={match.homeScore ?? 0}
+                          required
+                        />
+                        <input
+                          aria-label={`Goles ${match.awayTeam}`}
+                          name="awayScore"
+                          type="number"
+                          min="0"
+                          max="30"
+                          defaultValue={match.awayScore ?? 0}
+                          required
+                        />
+                      </div>
+                      <input name="adminPin" type="password" placeholder="PIN" required />
+                      <button className="secondary-button" type="submit">Cerrar resultado</button>
+                    </form>
+                  ))}
+                </div>
+              </div>
+
+              <div className="admin-card">
+                <div className="panel-header">
+                  <div>
+                    <h2>Resultados cerrados</h2>
+                    <p>Partidos con puntajes ya recalculados.</p>
+                  </div>
+                </div>
+                <div className="compact-list">
+                  {finishedMatches.length === 0 ? (
+                    <p className="empty-text">Aun no hay resultados cerrados.</p>
+                  ) : (
+                    finishedMatches.map((match) => (
+                      <div className="compact-row" key={match.id}>
+                        <span>{match.homeTeam}</span>
+                        <strong>
+                          {match.homeScore} - {match.awayScore}
+                        </strong>
+                        <span>{match.awayTeam}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </aside>
+
+            <div className="organizer-share">
+              <span>Ganancia estimada del organizador</span>
+              <strong>{formatMoney(organizerCents, config.currency)}</strong>
+            </div>
+          </details>
+        </section>
       </div>
     </main>
   );
