@@ -176,7 +176,7 @@ export default async function Home() {
                 <ChevronRight size={18} />
               </a>
               <a href="#registro" className="ghost-link">
-                Registrarme
+                Inscribirme
               </a>
             </div>
           </div>
@@ -344,32 +344,51 @@ export default async function Home() {
             </div>
           </div>
 
-          <aside className="register-panel" id="registro">
-            <div className="panel-header">
-              <div>
-                <h2>Inscripcion</h2>
-                <p>Registrate y envia tu comprobante. El codigo se activa con pago confirmado.</p>
+          <details className="register-panel" id="registro">
+            <summary>
+              <span>Entrar</span>
+              <span>Registrarse</span>
+              <small>S/10 · codigo con pago confirmado</small>
+            </summary>
+
+            <div className="entry-options">
+              <div className="entry-card existing-user">
+                <div>
+                  <Lock size={18} />
+                  <h2>Ya estoy inscrito</h2>
+                </div>
+                <p>Usa tu codigo en cualquier partido abierto para guardar o actualizar tu pronostico.</p>
+                <a href="#participante" className="secondary-button">
+                  Entrar con mi codigo
+                </a>
               </div>
-              <UserPlus className="text-[var(--accent)]" size={22} />
+
+              <div className="entry-card">
+                <div>
+                  <UserPlus size={18} />
+                  <h2>Nuevo participante</h2>
+                </div>
+                <p>Completa tus datos y envia tu comprobante. El codigo se activa cuando el pago queda confirmado.</p>
+                <form action={registerParticipant} className="stacked-form">
+                  <label>
+                    Nombre completo
+                    <input name="name" placeholder="Ej. Juan Perez" required />
+                  </label>
+                  <label>
+                    WhatsApp
+                    <input name="phone" placeholder="Ej. 999 999 999" required />
+                  </label>
+                  <label>
+                    Correo opcional
+                    <input name="email" type="email" placeholder="correo@dominio.com" />
+                  </label>
+                  <button className="primary-button" type="submit">
+                    Registrarme
+                  </button>
+                </form>
+              </div>
             </div>
-            <form action={registerParticipant} className="stacked-form">
-              <label>
-                Nombre completo
-                <input name="name" placeholder="Ej. Juan Perez" required />
-              </label>
-              <label>
-                WhatsApp
-                <input name="phone" placeholder="Ej. 999 999 999" required />
-              </label>
-              <label>
-                Correo opcional
-                <input name="email" type="email" placeholder="correo@dominio.com" />
-              </label>
-              <button className="primary-button" type="submit">
-                Registrarme
-              </button>
-            </form>
-          </aside>
+          </details>
         </section>
 
         <section className="ranking-section" id="ranking">

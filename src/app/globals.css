@@ -437,6 +437,89 @@ label {
   top: 74px;
 }
 
+.register-panel summary {
+  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+  list-style: none;
+}
+
+.register-panel summary::-webkit-details-marker {
+  display: none;
+}
+
+.register-panel summary span {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 8px;
+  font-weight: 860;
+}
+
+.register-panel summary span:first-child {
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--accent-strong);
+}
+
+.register-panel summary span:nth-child(2) {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.register-panel summary small {
+  grid-column: 1 / -1;
+  color: var(--muted-foreground);
+  font-weight: 720;
+  text-align: center;
+}
+
+.register-panel[open] summary {
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+  padding-bottom: 0.9rem;
+}
+
+.entry-options {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.entry-card {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.entry-card + .entry-card {
+  border-top: 1px solid var(--border);
+  padding-top: 0.95rem;
+}
+
+.entry-card > div {
+  align-items: center;
+  display: flex;
+  gap: 0.55rem;
+}
+
+.entry-card h2 {
+  font-size: 1rem;
+  font-weight: 880;
+}
+
+.entry-card p {
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.existing-user {
+  border-radius: 8px;
+  background: var(--surface-raised);
+  padding: 0.8rem;
+}
+
 .section-title {
   margin-bottom: 0.9rem;
 }
