@@ -14,6 +14,7 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
+import Image from "next/image";
 import {
   createMatch,
   markPayment,
@@ -152,6 +153,15 @@ function SectionTitle({
   );
 }
 
+function dayKey(date: Date) {
+  return new Intl.DateTimeFormat("en-CA", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "America/Lima",
+    year: "numeric",
+  }).format(date);
+}
+
 export default async function Home() {
   const { config, participants, matches, leaderboard } = await getDashboardData();
   const paidParticipants = participants.filter((participant) => participant.paymentStatus === "PAID");
@@ -175,6 +185,8 @@ export default async function Home() {
   const organizerCents = potCents - winnerCents;
   const now = new Date();
   const nextMatches = matches.filter((match) => match.status !== "FINISHED").slice(0, 8);
+  const todayMatches = matches.filter((match) => dayKey(match.startsAt) === dayKey(now));
+  const displayMatches = todayMatches.length > 0 ? todayMatches : nextMatches;
   const openMatches = nextMatches.filter((match) => match.startsAt > now);
   const finishedMatches = matches.filter((match) => match.status === "FINISHED");
   const nextClose = openMatches[0]?.startsAt;
@@ -204,50 +216,60 @@ export default async function Home() {
             </div>
           </div>
 
-          <aside className="hero-board" aria-label="Resumen de participacion">
-            <div className="hero-board-header">
-              <span>Pozo acumulado</span>
-              <strong>{formatMoney(potCents, config.currency)}</strong>
-            </div>
+          <aside className="hero-visual" aria-label="Resumen de participacion">
+            <Image
+              src="/images/trophy-hero.png"
+              alt="Copa dorada sobre una cancha de futbol"
+              className="hero-photo"
+              width={1400}
+              height={747}
+              priority
+            />
+            <div className="hero-board">
+              <div className="hero-board-header">
+                <span>Pozo acumulado</span>
+                <strong>{formatMoney(potCents, config.currency)}</strong>
+              </div>
 
-            <div className="scoreboard">
-              <div>
-                <TeamMark name="Polla" />
-                <span>{paidParticipants.length} pagados</span>
+              <div className="scoreboard">
+                <div>
+                  <TeamMark name="Polla" />
+                  <span>{paidParticipants.length} pagados</span>
+                </div>
+                <strong>VS</strong>
+                <div>
+                  <TeamMark name="Premio" />
+                  <span>{formatMoney(winnerCents, config.currency)} premio</span>
+                </div>
               </div>
-              <strong>VS</strong>
-              <div>
-                <TeamMark name="Premio" />
-                <span>{formatMoney(winnerCents, config.currency)} premio</span>
-              </div>
-            </div>
 
-            <dl className="rules-grid">
-              <div>
-                <CircleDollarSign size={16} />
-                <dt>Inscripcion</dt>
-                <dd>{formatMoney(config.entryFeeCents, config.currency)}</dd>
-              </div>
-              <div>
-                <CalendarClock size={16} />
-                <dt>Cierre</dt>
-                <dd>
-                  {nextClose
-                    ? new Intl.DateTimeFormat("es-PE", {
-                        day: "2-digit",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }).format(nextClose)
-                    : "Por partido"}
-                </dd>
-              </div>
-              <div>
-                <Share2 size={16} />
-                <dt>Referidos</dt>
-                <dd>{paidReferrals} pagados</dd>
-              </div>
-            </dl>
+              <dl className="rules-grid">
+                <div>
+                  <CircleDollarSign size={16} />
+                  <dt>Inscripcion</dt>
+                  <dd>{formatMoney(config.entryFeeCents, config.currency)}</dd>
+                </div>
+                <div>
+                  <CalendarClock size={16} />
+                  <dt>Cierre</dt>
+                  <dd>
+                    {nextClose
+                      ? new Intl.DateTimeFormat("es-PE", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        }).format(nextClose)
+                      : "Por partido"}
+                  </dd>
+                </div>
+                <div>
+                  <Share2 size={16} />
+                  <dt>Referidos</dt>
+                  <dd>{paidReferrals} pagados</dd>
+                </div>
+              </dl>
+            </div>
           </aside>
         </div>
       </section>
@@ -268,6 +290,20 @@ export default async function Home() {
               title="Entra a la polla en menos de un minuto"
               description="Registrate, confirma tu pago con el organizador y recibe tus codigos para pronosticar e invitar."
             />
+
+            <figure className="mascot-card">
+              <Image
+                src="/images/mascot-condor.png"
+                alt="Mascota original de futbol sosteniendo una pelota"
+                width={900}
+                height={900}
+                loading="eager"
+              />
+              <figcaption>
+                <strong>Tu codigo te abre la cancha.</strong>
+                <span>Inscribete, invita con tu referido y empieza a competir.</span>
+              </figcaption>
+            </figure>
 
             <div className="flow-steps" aria-label="Como funciona">
               <div>
@@ -290,9 +326,9 @@ export default async function Home() {
             </div>
           </div>
 
-          <details className="register-panel" open>
+          <details className="register-panel">
             <summary>
-              <span>Ya inscrito</span>
+              <span>Entrar</span>
               <span>Registrarme</span>
               <small>S/10 · ranking automatico · referido propio</small>
             </summary>
@@ -456,15 +492,19 @@ export default async function Home() {
           <div className="participant-main">
             <SectionTitle
               eyebrow="Pronosticos"
-              title="Partidos abiertos"
-              description="Ingresa tu codigo, marca el score y guarda antes del inicio."
+              title={todayMatches.length > 0 ? "Partidos de hoy" : "Proximos partidos"}
+              description={
+                todayMatches.length > 0
+                  ? "Estos partidos se muestran siempre durante el dia para registrar tus pronosticos."
+                  : "No hay partidos cargados para hoy; te mostramos los proximos disponibles."
+              }
             />
 
             <div className="match-grid">
-              {nextMatches.length === 0 ? (
+              {displayMatches.length === 0 ? (
                 <p className="empty-text">No hay partidos pendientes cargados.</p>
               ) : (
-                nextMatches.map((match) => {
+                displayMatches.map((match) => {
                   const locked = match.startsAt <= now;
 
                   return (

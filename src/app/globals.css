@@ -120,6 +120,7 @@ label {
 }
 
 .hero-card,
+.hero-visual,
 .hero-board,
 .register-panel,
 .leaderboard-panel,
@@ -132,14 +133,31 @@ label {
   box-shadow: var(--shadow-card);
 }
 
-.hero-board {
+.hero-visual {
   align-self: end;
+  overflow: hidden;
+  background: #073b28;
+  color: #ffffff;
+  box-shadow: var(--shadow-soft);
+}
+
+.hero-photo {
+  display: block;
+  height: 220px;
+  width: 100%;
+  object-fit: cover;
+  object-position: 94% center;
+}
+
+.hero-board {
   overflow: hidden;
   background:
     linear-gradient(180deg, rgba(7, 93, 57, 0.96), rgba(10, 50, 34, 0.98)),
     #0a3d2a;
   color: #ffffff;
-  box-shadow: var(--shadow-soft);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .hero-board .team-mark {
@@ -442,6 +460,45 @@ label {
   min-width: 0;
 }
 
+.mascot-card {
+  align-items: center;
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: 118px 1fr;
+  margin-bottom: 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(221, 244, 230, 0.85), rgba(255, 255, 255, 0.92)),
+    var(--surface);
+  overflow: hidden;
+  padding: 0.75rem;
+}
+
+.mascot-card img {
+  aspect-ratio: 1;
+  width: 118px;
+  border-radius: 8px;
+  object-fit: cover;
+  object-position: center;
+}
+
+.mascot-card figcaption {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.mascot-card strong {
+  font-size: 1rem;
+  font-weight: 880;
+}
+
+.mascot-card span {
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
 .flow-steps {
   display: grid;
   gap: 0.65rem;
@@ -542,6 +599,16 @@ label {
   border-bottom: 1px solid var(--border);
   margin-bottom: 1rem;
   padding-bottom: 0.9rem;
+}
+
+.register-panel:not([open]) {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(221, 244, 230, 0.62)),
+    var(--surface);
+}
+
+.register-panel:not([open]) summary small {
+  margin-top: 0.15rem;
 }
 
 .entry-options {
@@ -1086,6 +1153,10 @@ label {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .hero-photo {
+    height: 250px;
+  }
+
   .conversion-grid {
     align-items: start;
     grid-template-columns: minmax(0, 1.05fr) minmax(340px, 0.95fr);
@@ -1132,6 +1203,11 @@ label {
     padding-top: 1.75rem;
   }
 
+  .hero-photo {
+    height: 210px;
+    object-position: 94% center;
+  }
+
   .hero-actions,
   .admin-inline,
   .score-inputs {
@@ -1153,6 +1229,14 @@ label {
 
   .conversion-grid .register-panel {
     order: -1;
+  }
+
+  .mascot-card {
+    grid-template-columns: 92px 1fr;
+  }
+
+  .mascot-card img {
+    width: 92px;
   }
 
   .stat-card {
