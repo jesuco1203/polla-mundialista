@@ -177,7 +177,6 @@ export default async function Home() {
   const nextMatches = matches.filter((match) => match.status !== "FINISHED").slice(0, 8);
   const openMatches = nextMatches.filter((match) => match.startsAt > now);
   const finishedMatches = matches.filter((match) => match.status === "FINISHED");
-  const featuredMatch = openMatches[0] ?? nextMatches[0];
   const nextClose = openMatches[0]?.startsAt;
 
   return (
@@ -189,64 +188,64 @@ export default async function Home() {
               <Trophy size={16} />
               Mundial 2026
             </div>
-            <h1>Participa en la polla del Mundial 2026</h1>
+            <h1>Participa en la Polla Mundialista 2026</h1>
             <p>
-              Pronostica marcadores, compite por puntos y sigue el pozo en vivo.
-              La inscripcion es de S/10 y el premio al ganador es el 50% del acumulado.
+              Inscribete por S/10, pronostica cada partido y compite por el pozo
+              con ranking automatico.
             </p>
             <div className="hero-actions">
-              <a href="#participante" className="primary-link">
-                Pronosticar ahora
+              <a href="#registro" className="primary-link">
+                Inscribirme
                 <ChevronRight size={18} />
               </a>
-              <a href="#registro" className="ghost-link">
-                Inscribirme
+              <a href="#ranking" className="ghost-link">
+                Ver ranking
               </a>
             </div>
           </div>
 
-          <aside className="hero-board" aria-label="Resumen destacado">
+          <aside className="hero-board" aria-label="Resumen de participacion">
             <div className="hero-board-header">
-              <span>Proximo cierre</span>
-              <strong>
-                {nextClose
-                  ? new Intl.DateTimeFormat("es-PE", {
-                      day: "2-digit",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    }).format(nextClose)
-                  : "Sin fixture"}
-              </strong>
+              <span>Pozo acumulado</span>
+              <strong>{formatMoney(potCents, config.currency)}</strong>
             </div>
 
             <div className="scoreboard">
               <div>
-                <TeamMark name={featuredMatch?.homeTeam ?? "Local"} />
-                <span>{featuredMatch?.homeTeam ?? "Local"}</span>
+                <TeamMark name="Polla" />
+                <span>{paidParticipants.length} pagados</span>
               </div>
               <strong>VS</strong>
               <div>
-                <TeamMark name={featuredMatch?.awayTeam ?? "Visitante"} />
-                <span>{featuredMatch?.awayTeam ?? "Visitante"}</span>
+                <TeamMark name="Premio" />
+                <span>{formatMoney(winnerCents, config.currency)} premio</span>
               </div>
             </div>
 
             <dl className="rules-grid">
               <div>
-                <ShieldCheck size={16} />
+                <CircleDollarSign size={16} />
                 <dt>Inscripcion</dt>
                 <dd>{formatMoney(config.entryFeeCents, config.currency)}</dd>
               </div>
               <div>
-                <Medal size={16} />
-                <dt>Marcador exacto</dt>
-                <dd>2 pts</dd>
+                <CalendarClock size={16} />
+                <dt>Cierre</dt>
+                <dd>
+                  {nextClose
+                    ? new Intl.DateTimeFormat("es-PE", {
+                        day: "2-digit",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }).format(nextClose)
+                    : "Por partido"}
+                </dd>
               </div>
               <div>
-                <BadgeCheck size={16} />
-                <dt>Resultado correcto</dt>
-                <dd>1 pt</dd>
+                <Share2 size={16} />
+                <dt>Referidos</dt>
+                <dd>{paidReferrals} pagados</dd>
               </div>
             </dl>
           </aside>
@@ -254,66 +253,212 @@ export default async function Home() {
       </section>
 
       <nav className="view-tabs" aria-label="Vistas principales">
-        <a href="#participante">Participante</a>
+        <a href="#registro">Inscripcion</a>
         <a href="#ranking">Ranking</a>
+        <a href="#participante">Pronosticos</a>
+        <a href="#referidos">Referidos</a>
         <a href="#organizador">Organizador</a>
       </nav>
 
-      <section className="kpi-strip" aria-label="Resumen de la polla">
-        <StatCard
-          icon={<Users size={20} />}
-          label="Inscritos pagados"
-          value={`${paidParticipants.length}`}
-          detail={`${participants.length} registros totales`}
-        />
-        <StatCard
-          icon={<CircleDollarSign size={20} />}
-          label="Pozo acumulado"
-          value={formatMoney(potCents, config.currency)}
-          detail="Actualizado con pagos confirmados"
-        />
-        <StatCard
-          icon={<Medal size={20} />}
-          label="Premio al ganador"
-          value={formatMoney(winnerCents, config.currency)}
-          detail={`${config.winnerShare}% del pozo`}
-        />
-        <StatCard
-          icon={<CalendarClock size={20} />}
-          label="Cierre proximo"
-          value={
-            nextClose
-              ? new Intl.DateTimeFormat("es-PE", {
-                  day: "2-digit",
-                  month: "short",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }).format(nextClose)
-              : "Sin partidos"
-          }
-          detail="Pronostico bloqueado al iniciar"
-        />
-        <StatCard
-          icon={<Share2 size={20} />}
-          label="Referidos pagados"
-          value={`${paidReferrals}`}
-          detail={`${referralLeaders.length} participantes invitaron`}
-        />
-      </section>
-
       <div className="app-shell">
-        <section className="participant-layout" id="participante">
-          <div className="participant-main">
+        <section className="conversion-grid" id="registro">
+          <div className="signup-copy">
             <SectionTitle
-              eyebrow="Participante"
-              title="Partidos abiertos"
-              description="Ingresa tu codigo, marca el score y guarda antes del inicio."
+              eyebrow="Inscripcion"
+              title="Entra a la polla en menos de un minuto"
+              description="Registrate, confirma tu pago con el organizador y recibe tus codigos para pronosticar e invitar."
             />
+
+            <div className="flow-steps" aria-label="Como funciona">
+              <div>
+                <strong>1</strong>
+                <span>Te registras con WhatsApp.</span>
+              </div>
+              <div>
+                <strong>2</strong>
+                <span>Pagas S/10 y se confirma tu acceso.</span>
+              </div>
+              <div>
+                <strong>3</strong>
+                <span>Pronosticas, compites y compartes tu referido.</span>
+              </div>
+            </div>
 
             <div className="notice">
               <BadgeCheck size={18} />
-              <span>Para pronosticar, tu pago debe figurar como confirmado por el organizador.</span>
+              <span>El codigo para pronosticar se activa cuando tu pago queda marcado como pagado.</span>
             </div>
+          </div>
+
+          <details className="register-panel" open>
+            <summary>
+              <span>Ya inscrito</span>
+              <span>Registrarme</span>
+              <small>S/10 · ranking automatico · referido propio</small>
+            </summary>
+
+            <div className="entry-options">
+              <div className="entry-card existing-user">
+                <div>
+                  <Lock size={18} />
+                  <h2>Ya estoy inscrito</h2>
+                </div>
+                <p>Usa tu codigo en cualquier partido abierto para guardar o actualizar tu pronostico.</p>
+                <p className="helper-text">Tu codigo de referido aparece en el ranking y en el panel del organizador.</p>
+                <a href="#participante" className="secondary-button">
+                  Entrar con mi codigo
+                </a>
+              </div>
+
+              <div className="entry-card">
+                <div>
+                  <UserPlus size={18} />
+                  <h2>Nuevo participante</h2>
+                </div>
+                <p>Completa tus datos y envia tu comprobante. El codigo se activa cuando el pago queda confirmado.</p>
+                <form action={registerParticipant} className="stacked-form">
+                  <label>
+                    Nombre completo
+                    <input name="name" placeholder="Ej. Juan Perez" required />
+                  </label>
+                  <label>
+                    WhatsApp
+                    <input name="phone" placeholder="Ej. 999 999 999" required />
+                  </label>
+                  <label>
+                    Correo opcional
+                    <input name="email" type="email" placeholder="correo@dominio.com" />
+                  </label>
+                  <label>
+                    Codigo de quien te invito
+                    <input name="referralCode" placeholder="Ej. DEMO2026" />
+                  </label>
+                  <button className="primary-button" type="submit">
+                    Inscribirme
+                  </button>
+                </form>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <section className="kpi-strip" aria-label="Resumen de la polla">
+          <StatCard
+            icon={<Users size={20} />}
+            label="Inscritos pagados"
+            value={`${paidParticipants.length}`}
+            detail={`${participants.length} registros totales`}
+          />
+          <StatCard
+            icon={<CircleDollarSign size={20} />}
+            label="Pozo acumulado"
+            value={formatMoney(potCents, config.currency)}
+            detail="Actualizado con pagos confirmados"
+          />
+          <StatCard
+            icon={<Medal size={20} />}
+            label="Premio al ganador"
+            value={formatMoney(winnerCents, config.currency)}
+            detail={`${config.winnerShare}% del pozo`}
+          />
+          <StatCard
+            icon={<CalendarClock size={20} />}
+            label="Cierre proximo"
+            value={
+              nextClose
+                ? new Intl.DateTimeFormat("es-PE", {
+                    day: "2-digit",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }).format(nextClose)
+                : "Sin partidos"
+            }
+            detail="Pronostico bloqueado al iniciar"
+          />
+          <StatCard
+            icon={<Share2 size={20} />}
+            label="Referidos pagados"
+            value={`${paidReferrals}`}
+            detail={`${referralLeaders.length} participantes invitaron`}
+          />
+        </section>
+
+        <section className="ranking-section" id="ranking">
+          <SectionTitle
+            eyebrow="Competencia"
+            title="Ranking general"
+            description="Gana quien acumule mas puntos al terminar el Mundial."
+          />
+          <div className="leaderboard-panel">
+            <div className="overflow-x-auto">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Participante</th>
+                    <th>Codigo</th>
+                    <th>Exactos</th>
+                    <th>Pronosticos</th>
+                    <th>Referidos</th>
+                    <th>Puntos</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leaderboard.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="empty-cell">
+                        Aun no hay participantes pagados.
+                      </td>
+                    </tr>
+                  ) : (
+                    leaderboard.map((participant, index) => (
+                      <tr key={participant.id}>
+                        <td>{index + 1}</td>
+                        <td className="font-medium text-[var(--foreground)]">{participant.name}</td>
+                        <td>{participant.accessCode}</td>
+                        <td>{participant.exactHits}</td>
+                        <td>{participant.predictedMatches}</td>
+                        <td>
+                          {participants.find((item) => item.id === participant.id)?.referrals.filter(
+                            (referral) => referral.paymentStatus === "PAID",
+                          ).length ?? 0}
+                        </td>
+                        <td className="score-cell">{participant.totalPoints}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <section className="proof-grid" aria-label="Reglas y confianza">
+          <article className="proof-card">
+            <div className="proof-icon"><ShieldCheck size={20} /></div>
+            <h2>Reglas claras</h2>
+            <p>Marcador exacto suma 2 puntos. Resultado correcto suma 1 punto. Cada partido se bloquea al iniciar.</p>
+          </article>
+          <article className="proof-card">
+            <div className="proof-icon"><CircleDollarSign size={20} /></div>
+            <h2>Pago confirmado</h2>
+            <p>Tu acceso queda pendiente hasta que el organizador marque tu inscripcion como pagada.</p>
+          </article>
+          <article className="proof-card" id="referidos">
+            <div className="proof-icon"><Share2 size={20} /></div>
+            <h2>Invita con tu codigo</h2>
+            <p>Cada participante recibe un codigo de referido. En el panel se ve quien invito y cuantos ya pagaron.</p>
+          </article>
+        </section>
+
+        <section className="participant-layout" id="participante">
+          <div className="participant-main">
+            <SectionTitle
+              eyebrow="Pronosticos"
+              title="Partidos abiertos"
+              description="Ingresa tu codigo, marca el score y guarda antes del inicio."
+            />
 
             <div className="match-grid">
               {nextMatches.length === 0 ? (
@@ -371,107 +516,6 @@ export default async function Home() {
                   );
                 })
               )}
-            </div>
-          </div>
-
-          <details className="register-panel" id="registro">
-            <summary>
-              <span>Entrar</span>
-              <span>Registrarse</span>
-              <small>S/10 · codigo con pago confirmado</small>
-            </summary>
-
-            <div className="entry-options">
-              <div className="entry-card existing-user">
-                <div>
-                  <Lock size={18} />
-                  <h2>Ya estoy inscrito</h2>
-                </div>
-                <p>Usa tu codigo en cualquier partido abierto para guardar o actualizar tu pronostico.</p>
-                <p className="helper-text">Tu codigo de referido aparece en el ranking y en el panel del organizador.</p>
-                <a href="#participante" className="secondary-button">
-                  Entrar con mi codigo
-                </a>
-              </div>
-
-              <div className="entry-card">
-                <div>
-                  <UserPlus size={18} />
-                  <h2>Nuevo participante</h2>
-                </div>
-                <p>Completa tus datos y envia tu comprobante. El codigo se activa cuando el pago queda confirmado.</p>
-                <form action={registerParticipant} className="stacked-form">
-                  <label>
-                    Nombre completo
-                    <input name="name" placeholder="Ej. Juan Perez" required />
-                  </label>
-                  <label>
-                    WhatsApp
-                    <input name="phone" placeholder="Ej. 999 999 999" required />
-                  </label>
-                  <label>
-                    Correo opcional
-                    <input name="email" type="email" placeholder="correo@dominio.com" />
-                  </label>
-                  <label>
-                    Codigo de quien te invito
-                    <input name="referralCode" placeholder="Ej. DEMO2026" />
-                  </label>
-                  <button className="primary-button" type="submit">
-                    Registrarme
-                  </button>
-                </form>
-              </div>
-            </div>
-          </details>
-        </section>
-
-        <section className="ranking-section" id="ranking">
-          <SectionTitle
-            eyebrow="Competencia"
-            title="Ranking general"
-            description="Gana quien acumule mas puntos al terminar el Mundial."
-          />
-          <div className="leaderboard-panel">
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Participante</th>
-                    <th>Codigo</th>
-                    <th>Exactos</th>
-                    <th>Pronosticos</th>
-                    <th>Referidos</th>
-                    <th>Puntos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaderboard.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="empty-cell">
-                        Aun no hay participantes pagados.
-                      </td>
-                    </tr>
-                  ) : (
-                    leaderboard.map((participant, index) => (
-                      <tr key={participant.id}>
-                        <td>{index + 1}</td>
-                        <td className="font-medium text-[var(--foreground)]">{participant.name}</td>
-                        <td>{participant.accessCode}</td>
-                        <td>{participant.exactHits}</td>
-                        <td>{participant.predictedMatches}</td>
-                        <td>
-                          {participants.find((item) => item.id === participant.id)?.referrals.filter(
-                            (referral) => referral.paymentStatus === "PAID",
-                          ).length ?? 0}
-                        </td>
-                        <td className="score-cell">{participant.totalPoints}</td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
             </div>
           </div>
         </section>
