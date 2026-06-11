@@ -15,6 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import Image from "next/image";
+import { headers } from "next/headers";
 import {
   createMatch,
   markPayment,
@@ -23,6 +24,7 @@ import {
   syncMatches,
   updateMatchResult,
 } from "@/app/actions";
+import { ReferralShare } from "@/app/referral-share";
 import { prisma } from "@/lib/prisma";
 import { formatMoney } from "@/lib/scoring";
 
@@ -40,6 +42,15 @@ function firstSearchParam(value: string | string[] | undefined) {
 
 function normalizeCodeParam(value: string | string[] | undefined) {
   return firstSearchParam(value)?.trim().toUpperCase() || "";
+}
+
+async function getBaseUrl() {
+  const headersList = await headers();
+  const host = headersList.get("x-forwarded-host") ?? headersList.get("host") ?? "localhost:3000";
+  const protocol =
+    headersList.get("x-forwarded-proto")?.split(",")[0] ?? (host.includes("localhost") ? "http" : "https");
+
+  return `${protocol}://${host}`;
 }
 
 async function getDashboardData() {
@@ -181,6 +192,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const invitedByCode = normalizeCodeParam(query.ref);
   const registeredCode = normalizeCodeParam(query.registered);
   const referralError = firstSearchParam(query.referralError);
+  const baseUrl = await getBaseUrl();
   const { config, participants, matches, leaderboard } = await getDashboardData();
   const registeredParticipant = registeredCode
     ? await prisma.participant.findUnique({
@@ -366,18 +378,18 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             </summary>
 
             {registeredParticipant ? (
-              <div className="registration-success">
-                <BadgeCheck size={20} />
-                <div>
-                  <strong>Listo, {registeredParticipant.name}. Guarda tus codigos.</strong>
-                  <span>Acceso para pronosticar: {registeredParticipant.accessCode}</span>
-                  <span>Referido para invitar: {registeredParticipant.referralCode}</span>
-                  <small>
-                    Comparte /?ref={registeredParticipant.referralCode}#registro. Tu acceso queda activo cuando el
-                    organizador confirme tu pago.
-                  </small>
+              <>
+                <div className="registration-success">
+                  <BadgeCheck size={20} />
+                  <div>
+                    <strong>Listo, {registeredParticipant.name}. Guarda tus codigos.</strong>
+                    <span>Acceso para pronosticar: {registeredParticipant.accessCode}</span>
+                    <span>Referido para invitar: {registeredParticipant.referralCode}</span>
+                    <small>Tu acceso queda activo cuando el organizador confirme tu pago.</small>
+                  </div>
                 </div>
-              </div>
+                <ReferralShare baseUrl={baseUrl} code={registeredParticipant.referralCode} />
+              </>
             ) : null}
 
             {referralError === "invalid" ? (
@@ -694,6 +706,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                         <div>
                           <strong>{participant.name}</strong>
                           <span>Codigo {participant.referralCode}</span>
+                          <ReferralShare baseUrl={baseUrl} code={participant.referralCode} name={participant.name} compact />
                         </div>
                         <div>
                           <strong>{participant.paidReferrals}</strong>
