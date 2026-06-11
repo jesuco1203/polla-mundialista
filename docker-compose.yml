@@ -10,7 +10,7 @@ services:
       API_FOOTBALL_KEY: "${API_FOOTBALL_KEY:-}"
     volumes:
       - polla_data:/data
-    command: sh -c "sqlite3 /data/prod.db < prisma/init.sql && npm run start"
+    command: sh -c "sqlite3 /data/prod.db < prisma/init.sql && npm run db:ensure-referrals && npm run start"
 
 volumes:
   polla_data:

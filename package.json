@@ -9,6 +9,7 @@
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:init": "sqlite3 prisma/dev.db < prisma/init.sql",
+    "db:ensure-referrals": "tsx prisma/ensure-referrals.ts",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio"

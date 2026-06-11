@@ -8,46 +8,51 @@ datasource db {
 }
 
 model PoolConfig {
-  id              String   @id @default(cuid())
-  name            String   @default("Polla Mundialista 2026")
-  entryFeeCents   Int      @default(1000)
-  organizerShare  Int      @default(50)
-  winnerShare     Int      @default(50)
-  currency        String   @default("PEN")
-  registrationOpen Boolean @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id               String   @id @default(cuid())
+  name             String   @default("Polla Mundialista 2026")
+  entryFeeCents    Int      @default(1000)
+  organizerShare   Int      @default(50)
+  winnerShare      Int      @default(50)
+  currency         String   @default("PEN")
+  registrationOpen Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model Participant {
-  id            String       @id @default(cuid())
+  id            String        @id @default(cuid())
   name          String
   phone         String
   email         String?
-  accessCode    String       @unique
-  paymentStatus String       @default("PENDING")
+  accessCode    String        @unique
+  referralCode  String        @unique
+  referredById  String?
+  paymentStatus String        @default("PENDING")
   paymentNote   String?
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
   predictions   Prediction[]
+  referredBy    Participant?  @relation("ParticipantReferrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals     Participant[] @relation("ParticipantReferrals")
 
   @@index([paymentStatus])
+  @@index([referredById])
 }
 
 model Match {
-  id         String       @id @default(cuid())
-  externalId String?      @unique
-  stage      String
-  groupName  String?
-  homeTeam   String
-  awayTeam   String
-  startsAt   DateTime
-  status     String       @default("SCHEDULED")
-  homeScore  Int?
-  awayScore  Int?
-  venue      String?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  id          String       @id @default(cuid())
+  externalId  String?      @unique
+  stage       String
+  groupName   String?
+  homeTeam    String
+  awayTeam    String
+  startsAt    DateTime
+  status      String       @default("SCHEDULED")
+  homeScore   Int?
+  awayScore   Int?
+  venue       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   predictions Prediction[]
 
   @@index([startsAt])

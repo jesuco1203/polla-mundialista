@@ -514,6 +514,11 @@ label {
   line-height: 1.45;
 }
 
+.helper-text {
+  border-left: 3px solid var(--accent);
+  padding-left: 0.7rem;
+}
+
 .existing-user {
   border-radius: 8px;
   background: var(--surface-raised);
@@ -909,6 +914,37 @@ label {
   text-align: right;
 }
 
+.referral-row {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+  padding: 0.7rem 0;
+}
+
+.referral-row strong,
+.referral-row span {
+  display: block;
+}
+
+.referral-row span {
+  margin-top: 0.15rem;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+
+.referral-row > div:last-child {
+  min-width: 74px;
+  text-align: right;
+}
+
+.referral-row > div:last-child strong {
+  color: var(--accent-strong);
+  font-size: 1.4rem;
+  font-weight: 880;
+}
+
 .organizer-share {
   align-items: center;
   display: flex;
@@ -960,7 +996,7 @@ label {
 
 @media (min-width: 1120px) {
   .kpi-strip {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
   .participant-layout {

@@ -10,6 +10,7 @@ const participantSchema = z.object({
   name: z.string().trim().min(2).max(80),
   phone: z.string().trim().min(6).max(30),
   email: z.string().trim().email().optional().or(z.literal("")),
+  referralCode: z.string().trim().max(20).optional().or(z.literal("")),
 });
 
 const predictionSchema = z.object({
@@ -41,28 +42,47 @@ function requireAdminPin(formData: FormData) {
   }
 }
 
+async function makeUniqueParticipantCode(field: "accessCode" | "referralCode") {
+  let code = makeAccessCode();
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const exists = await prisma.participant.findFirst({
+      where: { [field]: code },
+      select: { id: true },
+    });
+    if (!exists) return code;
+    code = makeAccessCode();
+  }
+
+  throw new Error("No se pudo generar un codigo unico. Intenta otra vez.");
+}
+
 export async function registerParticipant(formData: FormData) {
   const parsed = participantSchema.parse({
     name: formData.get("name"),
     phone: formData.get("phone"),
     email: formData.get("email") || undefined,
+    referralCode: formData.get("referralCode") || undefined,
   });
 
-  let accessCode = makeAccessCode();
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    const exists = await prisma.participant.findUnique({
-      where: { accessCode },
-      select: { id: true },
-    });
-    if (!exists) break;
-    accessCode = makeAccessCode();
-  }
+  const accessCode = await makeUniqueParticipantCode("accessCode");
+  const referralCode = await makeUniqueParticipantCode("referralCode");
+  const normalizedReferralCode = parsed.referralCode?.toUpperCase() || "";
+  const referrer = normalizedReferralCode
+    ? await prisma.participant.findUnique({
+        where: { referralCode: normalizedReferralCode },
+        select: { id: true },
+      })
+    : null;
 
   await prisma.participant.create({
     data: {
-      ...parsed,
+      name: parsed.name,
+      phone: parsed.phone,
       email: parsed.email || null,
       accessCode,
+      referralCode,
+      referredById: referrer?.id ?? null,
     },
   });
 

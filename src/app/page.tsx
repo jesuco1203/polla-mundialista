@@ -8,6 +8,7 @@ import {
   Lock,
   Medal,
   RefreshCcw,
+  Share2,
   ShieldCheck,
   Trophy,
   UserPlus,
@@ -31,7 +32,15 @@ async function getDashboardData() {
     prisma.poolConfig.findFirst(),
     prisma.participant.findMany({
       orderBy: { createdAt: "desc" },
-      include: { predictions: true },
+      include: {
+        predictions: true,
+        referredBy: {
+          select: { name: true, referralCode: true },
+        },
+        referrals: {
+          select: { id: true, name: true, paymentStatus: true },
+        },
+      },
     }),
     prisma.match.findMany({
       orderBy: { startsAt: "asc" },
@@ -146,6 +155,21 @@ function SectionTitle({
 export default async function Home() {
   const { config, participants, matches, leaderboard } = await getDashboardData();
   const paidParticipants = participants.filter((participant) => participant.paymentStatus === "PAID");
+  const paidReferrals = participants.reduce(
+    (total, participant) =>
+      total + participant.referrals.filter((referral) => referral.paymentStatus === "PAID").length,
+    0,
+  );
+  const referralLeaders = participants
+    .map((participant) => ({
+      id: participant.id,
+      name: participant.name,
+      referralCode: participant.referralCode,
+      totalReferrals: participant.referrals.length,
+      paidReferrals: participant.referrals.filter((referral) => referral.paymentStatus === "PAID").length,
+    }))
+    .filter((participant) => participant.totalReferrals > 0)
+    .sort((a, b) => b.paidReferrals - a.paidReferrals || b.totalReferrals - a.totalReferrals);
   const potCents = paidParticipants.length * config.entryFeeCents;
   const winnerCents = Math.floor((potCents * config.winnerShare) / 100);
   const organizerCents = potCents - winnerCents;
@@ -269,6 +293,12 @@ export default async function Home() {
           }
           detail="Pronostico bloqueado al iniciar"
         />
+        <StatCard
+          icon={<Share2 size={20} />}
+          label="Referidos pagados"
+          value={`${paidReferrals}`}
+          detail={`${referralLeaders.length} participantes invitaron`}
+        />
       </section>
 
       <div className="app-shell">
@@ -358,6 +388,7 @@ export default async function Home() {
                   <h2>Ya estoy inscrito</h2>
                 </div>
                 <p>Usa tu codigo en cualquier partido abierto para guardar o actualizar tu pronostico.</p>
+                <p className="helper-text">Tu codigo de referido aparece en el ranking y en el panel del organizador.</p>
                 <a href="#participante" className="secondary-button">
                   Entrar con mi codigo
                 </a>
@@ -381,6 +412,10 @@ export default async function Home() {
                   <label>
                     Correo opcional
                     <input name="email" type="email" placeholder="correo@dominio.com" />
+                  </label>
+                  <label>
+                    Codigo de quien te invito
+                    <input name="referralCode" placeholder="Ej. DEMO2026" />
                   </label>
                   <button className="primary-button" type="submit">
                     Registrarme
@@ -407,13 +442,14 @@ export default async function Home() {
                     <th>Codigo</th>
                     <th>Exactos</th>
                     <th>Pronosticos</th>
+                    <th>Referidos</th>
                     <th>Puntos</th>
                   </tr>
                 </thead>
                 <tbody>
                   {leaderboard.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="empty-cell">
+                      <td colSpan={7} className="empty-cell">
                         Aun no hay participantes pagados.
                       </td>
                     </tr>
@@ -425,6 +461,11 @@ export default async function Home() {
                         <td>{participant.accessCode}</td>
                         <td>{participant.exactHits}</td>
                         <td>{participant.predictedMatches}</td>
+                        <td>
+                          {participants.find((item) => item.id === participant.id)?.referrals.filter(
+                            (referral) => referral.paymentStatus === "PAID",
+                          ).length ?? 0}
+                        </td>
                         <td className="score-cell">{participant.totalPoints}</td>
                       </tr>
                     ))
@@ -473,7 +514,15 @@ export default async function Home() {
                       <input type="hidden" name="participantId" value={participant.id} />
                       <div>
                         <strong>{participant.name}</strong>
-                        <span>{participant.phone} · {participant.accessCode}</span>
+                        <span>{participant.phone} · Acceso {participant.accessCode}</span>
+                        <span>Referido {participant.referralCode}</span>
+                        {participant.referredBy ? (
+                          <span>Invitado por {participant.referredBy.name}</span>
+                        ) : null}
+                        <span>
+                          {participant.referrals.length} referidos ·{" "}
+                          {participant.referrals.filter((referral) => referral.paymentStatus === "PAID").length} pagados
+                        </span>
                         <StatusPill status={participant.paymentStatus} />
                       </div>
                       <select name="paymentStatus" defaultValue={participant.paymentStatus}>
@@ -488,6 +537,34 @@ export default async function Home() {
                       </button>
                     </form>
                   ))}
+                </div>
+              </div>
+
+              <div className="admin-card">
+                <div className="panel-header">
+                  <div>
+                    <h2>Referidos</h2>
+                    <p>Controla quienes traen participantes y cuantos ya pagaron.</p>
+                  </div>
+                  <Share2 className="text-[var(--accent)]" size={22} />
+                </div>
+                <div className="compact-list">
+                  {referralLeaders.length === 0 ? (
+                    <p className="empty-text">Aun no hay referidos registrados.</p>
+                  ) : (
+                    referralLeaders.map((participant) => (
+                      <div className="referral-row" key={participant.id}>
+                        <div>
+                          <strong>{participant.name}</strong>
+                          <span>Codigo {participant.referralCode}</span>
+                        </div>
+                        <div>
+                          <strong>{participant.paidReferrals}</strong>
+                          <span>{participant.totalReferrals} total</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 

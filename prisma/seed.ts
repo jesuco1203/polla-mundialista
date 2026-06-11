@@ -63,6 +63,7 @@ async function main() {
       phone: "999999999",
       email: "demo@polla.local",
       accessCode: "DEMO2026",
+      referralCode: "DEMO2026",
       paymentStatus: "PAID",
       paymentNote: "Semilla local",
     },

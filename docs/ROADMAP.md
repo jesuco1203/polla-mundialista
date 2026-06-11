@@ -58,6 +58,30 @@ Alternativas:
 - Terminos y consentimiento.
 - Integracion Yape/Plin o pasarela si la parte legal esta resuelta.
 
+## Sistema de referidos
+
+### Fase 1: MVP operativo
+
+- Cada participante recibe un codigo de referido propio.
+- El formulario de registro acepta un codigo opcional de quien invito.
+- El organizador puede ver referidos totales y referidos pagados por participante.
+- El ranking publico muestra referidos pagados como senal social, sin alterar el puntaje deportivo.
+- El pago sigue siendo manual; un referido solo cuenta como validado cuando su estado pasa a `Pagado`.
+
+### Fase 2: Incentivos
+
+- Definir premio por referidos: descuento de inscripcion, bono al pozo, premio separado o beneficio manual.
+- Mostrar estado de recompensa: pendiente, validada, entregada.
+- Agregar reporte descargable para liquidar premios por referido.
+- Permitir enlaces compartibles con `?ref=CODIGO`.
+
+### Fase 3: Control y crecimiento
+
+- Detectar duplicados por telefono/correo antes de contar recompensa.
+- Limitar autorreferidos y cambios de referido despues del pago.
+- Panel de conversion por canal: invitados, pagados, conversion y monto generado.
+- Notificaciones WhatsApp para invitar y recordar pagos.
+
 ## Fase 3
 
 - Sincronizacion programada de resultados.
