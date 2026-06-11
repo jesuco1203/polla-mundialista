@@ -340,3 +340,19 @@ export async function syncMatches(formData: FormData) {
 
   revalidatePath("/");
 }
+
+export async function testGoogleLogging(formData: FormData) {
+  requireAdminPin(formData);
+
+  await logEvent({
+    actor: "organizer",
+    event: "audit.google_test",
+    payload: {
+      googleWebhookConfigured: Boolean(process.env.GOOGLE_LOG_WEBHOOK_URL),
+      source: "admin-panel",
+    },
+    targetType: "System",
+  });
+
+  revalidatePath("/");
+}

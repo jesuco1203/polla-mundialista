@@ -66,6 +66,8 @@ Para duplicar los logs en Google Sheets, crea un Apps Script publicado como Web 
 
 Usa el prompt de `docs/GOOGLE_LOGGING_NAVIGATOR_PROMPT.md` con una IA navegadora conectada a Google.
 
+Despues de configurar las variables en produccion, usa el boton `Probar Google` en el panel organizador. Debe crear un evento `audit.google_test`; si Google respondio bien, el estado queda como `SENT`.
+
 ## Pendientes antes de produccion abierta
 
 - Validar encuadre legal antes de cobrar o promocionar masivamente.

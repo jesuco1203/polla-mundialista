@@ -22,6 +22,7 @@ import {
   registerParticipant,
   savePrediction,
   syncMatches,
+  testGoogleLogging,
   updateMatchResult,
 } from "@/app/actions";
 import { ReferralShare } from "@/app/referral-share";
@@ -755,6 +756,12 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                     ))
                   )}
                 </div>
+                <form action={testGoogleLogging} className="admin-inline audit-test-form">
+                  <input name="adminPin" placeholder="PIN organizador" type="password" />
+                  <button className="secondary-button" type="submit">
+                    Probar Google
+                  </button>
+                </form>
               </div>
 
               <div className="admin-card">

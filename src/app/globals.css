@@ -1264,6 +1264,10 @@ label {
   text-align: right;
 }
 
+.audit-test-form {
+  margin-top: 0.9rem;
+}
+
 .compact-row {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
