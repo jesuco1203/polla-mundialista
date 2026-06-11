@@ -611,6 +611,60 @@ label {
   margin-top: 0.15rem;
 }
 
+.registration-success,
+.registration-alert {
+  margin-bottom: 0.95rem;
+  border-radius: 8px;
+  padding: 0.9rem;
+}
+
+.registration-success {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.75rem;
+  border: 1px solid rgba(16, 145, 86, 0.28);
+  background: #eaf8f0;
+  color: var(--accent-strong);
+}
+
+.registration-success svg {
+  flex: 0 0 auto;
+  margin-top: 0.1rem;
+}
+
+.registration-success strong,
+.registration-success span,
+.registration-success small {
+  display: block;
+}
+
+.registration-success strong {
+  color: var(--foreground);
+  font-size: 0.94rem;
+  font-weight: 880;
+}
+
+.registration-success span {
+  margin-top: 0.35rem;
+  font-weight: 860;
+}
+
+.registration-success small {
+  margin-top: 0.55rem;
+  color: var(--muted-foreground);
+  font-weight: 720;
+  line-height: 1.35;
+}
+
+.registration-alert {
+  border: 1px solid rgba(143, 83, 21, 0.24);
+  background: #fff5df;
+  color: var(--warning);
+  font-size: 0.9rem;
+  font-weight: 780;
+  line-height: 1.4;
+}
+
 .entry-options {
   display: grid;
   gap: 0.85rem;

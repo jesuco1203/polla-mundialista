@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { fetchWorldCupMatches } from "@/lib/football-api";
@@ -57,6 +58,10 @@ async function makeUniqueParticipantCode(field: "accessCode" | "referralCode") {
   throw new Error("No se pudo generar un codigo unico. Intenta otra vez.");
 }
 
+function normalizeCode(code: string | undefined) {
+  return code?.trim().toUpperCase() || "";
+}
+
 export async function registerParticipant(formData: FormData) {
   const parsed = participantSchema.parse({
     name: formData.get("name"),
@@ -67,7 +72,7 @@ export async function registerParticipant(formData: FormData) {
 
   const accessCode = await makeUniqueParticipantCode("accessCode");
   const referralCode = await makeUniqueParticipantCode("referralCode");
-  const normalizedReferralCode = parsed.referralCode?.toUpperCase() || "";
+  const normalizedReferralCode = normalizeCode(parsed.referralCode);
   const referrer = normalizedReferralCode
     ? await prisma.participant.findUnique({
         where: { referralCode: normalizedReferralCode },
@@ -75,7 +80,11 @@ export async function registerParticipant(formData: FormData) {
       })
     : null;
 
-  await prisma.participant.create({
+  if (normalizedReferralCode && !referrer) {
+    redirect(`/?ref=${encodeURIComponent(normalizedReferralCode)}&referralError=invalid#registro`);
+  }
+
+  const participant = await prisma.participant.create({
     data: {
       name: parsed.name,
       phone: parsed.phone,
@@ -87,6 +96,7 @@ export async function registerParticipant(formData: FormData) {
   });
 
   revalidatePath("/");
+  redirect(`/?registered=${encodeURIComponent(participant.referralCode)}#registro`);
 }
 
 export async function savePrediction(formData: FormData) {

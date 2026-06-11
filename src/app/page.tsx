@@ -28,6 +28,20 @@ import { formatMoney } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
 
+type HomeSearchParams = Promise<{
+  ref?: string | string[];
+  registered?: string | string[];
+  referralError?: string | string[];
+}>;
+
+function firstSearchParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function normalizeCodeParam(value: string | string[] | undefined) {
+  return firstSearchParam(value)?.trim().toUpperCase() || "";
+}
+
 async function getDashboardData() {
   const [config, participants, matches, leaderboard] = await Promise.all([
     prisma.poolConfig.findFirst(),
@@ -162,8 +176,25 @@ function dayKey(date: Date) {
   }).format(date);
 }
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams?: HomeSearchParams }) {
+  const query = searchParams ? await searchParams : {};
+  const invitedByCode = normalizeCodeParam(query.ref);
+  const registeredCode = normalizeCodeParam(query.registered);
+  const referralError = firstSearchParam(query.referralError);
   const { config, participants, matches, leaderboard } = await getDashboardData();
+  const registeredParticipant = registeredCode
+    ? await prisma.participant.findUnique({
+        where: { referralCode: registeredCode },
+        select: {
+          accessCode: true,
+          name: true,
+          referralCode: true,
+          referredBy: {
+            select: { name: true },
+          },
+        },
+      })
+    : null;
   const paidParticipants = participants.filter((participant) => participant.paymentStatus === "PAID");
   const paidReferrals = participants.reduce(
     (total, participant) =>
@@ -190,6 +221,7 @@ export default async function Home() {
   const openMatches = nextMatches.filter((match) => match.startsAt > now);
   const finishedMatches = matches.filter((match) => match.status === "FINISHED");
   const nextClose = openMatches[0]?.startsAt;
+  const shouldOpenRegisterPanel = Boolean(invitedByCode || referralError || registeredParticipant);
 
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -326,12 +358,33 @@ export default async function Home() {
             </div>
           </div>
 
-          <details className="register-panel">
+          <details className="register-panel" open={shouldOpenRegisterPanel}>
             <summary>
               <span>Entrar</span>
               <span>Registrarme</span>
               <small>S/10 · ranking automatico · referido propio</small>
             </summary>
+
+            {registeredParticipant ? (
+              <div className="registration-success">
+                <BadgeCheck size={20} />
+                <div>
+                  <strong>Listo, {registeredParticipant.name}. Guarda tus codigos.</strong>
+                  <span>Acceso para pronosticar: {registeredParticipant.accessCode}</span>
+                  <span>Referido para invitar: {registeredParticipant.referralCode}</span>
+                  <small>
+                    Comparte /?ref={registeredParticipant.referralCode}#registro. Tu acceso queda activo cuando el
+                    organizador confirme tu pago.
+                  </small>
+                </div>
+              </div>
+            ) : null}
+
+            {referralError === "invalid" ? (
+              <div className="registration-alert">
+                No encontramos el codigo {invitedByCode}. Revisa el codigo o registrate sin referido.
+              </div>
+            ) : null}
 
             <div className="entry-options">
               <div className="entry-card existing-user">
@@ -367,7 +420,7 @@ export default async function Home() {
                   </label>
                   <label>
                     Codigo de quien te invito
-                    <input name="referralCode" placeholder="Ej. DEMO2026" />
+                    <input name="referralCode" placeholder="Ej. DEMO2026" defaultValue={invitedByCode} />
                   </label>
                   <button className="primary-button" type="submit">
                     Inscribirme
@@ -433,7 +486,7 @@ export default async function Home() {
                   <tr>
                     <th>#</th>
                     <th>Participante</th>
-                    <th>Codigo</th>
+                    <th>Codigo referido</th>
                     <th>Exactos</th>
                     <th>Pronosticos</th>
                     <th>Referidos</th>
@@ -452,7 +505,7 @@ export default async function Home() {
                       <tr key={participant.id}>
                         <td>{index + 1}</td>
                         <td className="font-medium text-[var(--foreground)]">{participant.name}</td>
-                        <td>{participant.accessCode}</td>
+                        <td>{participant.referralCode}</td>
                         <td>{participant.exactHits}</td>
                         <td>{participant.predictedMatches}</td>
                         <td>
