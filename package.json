@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:generate": "prisma generate",
-    "db:init": "sqlite3 prisma/dev.db < prisma/init.sql",
+    "db:init": "sqlite3 prisma/dev.db < prisma/init.sql && npm run db:ensure-referrals",
     "db:ensure-referrals": "tsx prisma/ensure-referrals.ts",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
