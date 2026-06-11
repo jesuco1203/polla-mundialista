@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { logEvent } from "@/lib/audit-log";
 import { fetchWorldCupMatches } from "@/lib/football-api";
+import { getGoogleSession } from "@/lib/google-auth";
 import { makeAccessCode, scorePrediction } from "@/lib/scoring";
 
 const participantSchema = z.object({
@@ -16,7 +17,7 @@ const participantSchema = z.object({
 });
 
 const predictionSchema = z.object({
-  accessCode: z.string().trim().min(4).max(20),
+  accessCode: z.string().trim().max(20).optional().or(z.literal("")),
   matchId: z.string().trim().min(1),
   homeScore: z.coerce.number().int().min(0).max(30),
   awayScore: z.coerce.number().int().min(0).max(30),
@@ -133,12 +134,20 @@ export async function savePrediction(formData: FormData) {
     awayScore: formData.get("awayScore"),
   });
 
-  const participant = await prisma.participant.findUnique({
-    where: { accessCode: parsed.accessCode.toUpperCase() },
-  });
+  const accessCode = normalizeCode(parsed.accessCode);
+  const googleSession = accessCode ? null : await getGoogleSession();
+  const participant = accessCode
+    ? await prisma.participant.findUnique({
+        where: { accessCode },
+      })
+    : googleSession?.email
+      ? await prisma.participant.findFirst({
+          where: { email: { equals: googleSession.email } },
+        })
+      : null;
 
   if (!participant) {
-    throw new Error("No existe un participante con ese codigo.");
+    throw new Error("No encontramos tu inscripcion. Entra con Google o usa tu codigo.");
   }
 
   if (participant.paymentStatus !== "PAID") {

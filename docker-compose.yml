@@ -10,6 +10,10 @@ services:
       API_FOOTBALL_KEY: "${API_FOOTBALL_KEY:-}"
       GOOGLE_LOG_WEBHOOK_URL: "${GOOGLE_LOG_WEBHOOK_URL:-}"
       GOOGLE_LOG_SECRET: "${GOOGLE_LOG_SECRET:-}"
+      APP_URL: "${APP_URL:-http://localhost:3000}"
+      AUTH_SECRET: "${AUTH_SECRET:-}"
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET:-}"
     volumes:
       - polla_data:/data
     command: sh -c "sqlite3 /data/prod.db < prisma/init.sql && npm run db:ensure-referrals && npm run start"

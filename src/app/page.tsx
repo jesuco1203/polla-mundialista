@@ -5,6 +5,8 @@ import {
   CircleDollarSign,
   ClipboardList,
   Clock3,
+  LogIn,
+  LogOut,
   Lock,
   Medal,
   RefreshCcw,
@@ -26,6 +28,7 @@ import {
   updateMatchResult,
 } from "@/app/actions";
 import { ReferralShare } from "@/app/referral-share";
+import { getGoogleSession } from "@/lib/google-auth";
 import { prisma } from "@/lib/prisma";
 import { formatMoney } from "@/lib/scoring";
 
@@ -35,6 +38,7 @@ type HomeSearchParams = Promise<{
   ref?: string | string[];
   registered?: string | string[];
   referralError?: string | string[];
+  authError?: string | string[];
 }>;
 
 function firstSearchParam(value: string | string[] | undefined) {
@@ -198,7 +202,9 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const invitedByCode = normalizeCodeParam(query.ref);
   const registeredCode = normalizeCodeParam(query.registered);
   const referralError = firstSearchParam(query.referralError);
+  const authError = firstSearchParam(query.authError);
   const baseUrl = await getBaseUrl();
+  const googleSession = await getGoogleSession();
   const { config, participants, matches, auditLogs, leaderboard } = await getDashboardData();
   const registeredParticipant = registeredCode
     ? await prisma.participant.findUnique({
@@ -229,6 +235,9 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
     }))
     .filter((participant) => participant.totalReferrals > 0)
     .sort((a, b) => b.paidReferrals - a.paidReferrals || b.totalReferrals - a.totalReferrals);
+  const googleParticipant = googleSession?.email
+    ? participants.find((participant) => participant.email?.toLowerCase() === googleSession.email.toLowerCase()) ?? null
+    : null;
   const potCents = paidParticipants.length * config.entryFeeCents;
   const winnerCents = Math.floor((potCents * config.winnerShare) / 100);
   const organizerCents = potCents - winnerCents;
@@ -239,7 +248,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const openMatches = nextMatches.filter((match) => match.startsAt > now);
   const finishedMatches = matches.filter((match) => match.status === "FINISHED");
   const nextClose = openMatches[0]?.startsAt;
-  const shouldOpenRegisterPanel = Boolean(invitedByCode || referralError || registeredParticipant);
+  const shouldOpenRegisterPanel = Boolean(invitedByCode || referralError || authError || registeredParticipant);
 
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -263,6 +272,24 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
               <a href="#ranking" className="ghost-link">
                 Ver ranking
               </a>
+            </div>
+            <div className="auth-strip">
+              {googleSession ? (
+                <>
+                  <span>{googleSession.name}</span>
+                  <form action="/api/auth/logout" method="post">
+                    <button className="google-button subtle" type="submit">
+                      <LogOut size={16} />
+                      Salir
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <a className="google-button" href="/api/auth/google">
+                  <LogIn size={16} />
+                  Entrar con Google
+                </a>
+              )}
             </div>
           </div>
 
@@ -403,6 +430,13 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 No encontramos el codigo {invitedByCode}. Revisa el codigo o registrate sin referido.
               </div>
             ) : null}
+            {authError ? (
+              <div className="registration-alert">
+                {authError === "missing_config"
+                  ? "El login con Google queda listo cuando configuremos las credenciales."
+                  : "No pudimos completar el ingreso con Google. Intenta otra vez."}
+              </div>
+            ) : null}
 
             <div className="entry-options">
               <div className="entry-card existing-user">
@@ -410,11 +444,22 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   <Lock size={18} />
                   <h2>Ya estoy inscrito</h2>
                 </div>
-                <p>Usa tu codigo en cualquier partido abierto para guardar o actualizar tu pronostico.</p>
-                <p className="helper-text">Tu codigo de referido aparece en el ranking y en el panel del organizador.</p>
-                <a href="#participante" className="secondary-button">
-                  Entrar con mi codigo
-                </a>
+                {googleParticipant ? (
+                  <p>Entraste como {googleParticipant.name}. Puedes pronosticar sin escribir tu codigo.</p>
+                ) : (
+                  <p>Usa Google si tu correo ya esta inscrito, o tu codigo en cualquier partido abierto.</p>
+                )}
+                <div className="auth-actions">
+                  {googleSession ? null : (
+                    <a className="google-button" href="/api/auth/google">
+                      <LogIn size={16} />
+                      Entrar con Google
+                    </a>
+                  )}
+                  <a href="#participante" className="secondary-button">
+                    Ir a pronosticos
+                  </a>
+                </div>
               </div>
 
               <div className="entry-card">
@@ -426,7 +471,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 <form action={registerParticipant} className="stacked-form">
                   <label>
                     Nombre completo
-                    <input name="name" placeholder="Ej. Juan Perez" required />
+                    <input name="name" placeholder="Ej. Juan Perez" defaultValue={googleSession?.name ?? ""} required />
                   </label>
                   <label>
                     WhatsApp
@@ -434,7 +479,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   </label>
                   <label>
                     Correo opcional
-                    <input name="email" type="email" placeholder="correo@dominio.com" />
+                    <input name="email" type="email" placeholder="correo@dominio.com" defaultValue={googleSession?.email ?? ""} />
                   </label>
                   <label>
                     Codigo de quien te invito
@@ -606,10 +651,17 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                       </p>
 
                       <input type="hidden" name="matchId" value={match.id} />
-                      <label>
-                        Ingresa tu codigo
-                        <input name="accessCode" placeholder="DEMO2026" required disabled={locked} />
-                      </label>
+                      {googleParticipant ? (
+                        <>
+                          <input name="accessCode" type="hidden" value="" />
+                          <p className="helper-text">Pronosticas como {googleParticipant.name}.</p>
+                        </>
+                      ) : (
+                        <label>
+                          Ingresa tu codigo
+                          <input name="accessCode" placeholder="DEMO2026" required disabled={locked} />
+                        </label>
+                      )}
                       <div className="score-inputs compact">
                         <label>
                           Local
