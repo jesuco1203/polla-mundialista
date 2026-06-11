@@ -54,6 +54,17 @@ CREATE TABLE IF NOT EXISTS "Prediction" (
     CONSTRAINT "Prediction_matchId_fkey" FOREIGN KEY ("matchId") REFERENCES "Match" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS "AuditLog" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "event" TEXT NOT NULL,
+    "actor" TEXT,
+    "targetType" TEXT,
+    "targetId" TEXT,
+    "payloadJson" TEXT NOT NULL,
+    "googleStatus" TEXT NOT NULL DEFAULT 'SKIPPED',
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE UNIQUE INDEX IF NOT EXISTS "Participant_accessCode_key" ON "Participant"("accessCode");
 CREATE INDEX IF NOT EXISTS "Participant_paymentStatus_idx" ON "Participant"("paymentStatus");
 CREATE UNIQUE INDEX IF NOT EXISTS "Match_externalId_key" ON "Match"("externalId");
@@ -61,3 +72,6 @@ CREATE INDEX IF NOT EXISTS "Match_startsAt_idx" ON "Match"("startsAt");
 CREATE INDEX IF NOT EXISTS "Match_status_idx" ON "Match"("status");
 CREATE INDEX IF NOT EXISTS "Prediction_points_idx" ON "Prediction"("points");
 CREATE UNIQUE INDEX IF NOT EXISTS "Prediction_participantId_matchId_key" ON "Prediction"("participantId", "matchId");
+CREATE INDEX IF NOT EXISTS "AuditLog_event_idx" ON "AuditLog"("event");
+CREATE INDEX IF NOT EXISTS "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
+CREATE INDEX IF NOT EXISTS "AuditLog_targetType_targetId_idx" ON "AuditLog"("targetType", "targetId");

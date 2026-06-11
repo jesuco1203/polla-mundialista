@@ -74,3 +74,18 @@ model Prediction {
   @@unique([participantId, matchId])
   @@index([points])
 }
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  event        String
+  actor        String?
+  targetType   String?
+  targetId     String?
+  payloadJson  String
+  googleStatus String   @default("SKIPPED")
+  createdAt    DateTime @default(now())
+
+  @@index([event])
+  @@index([createdAt])
+  @@index([targetType, targetId])
+}

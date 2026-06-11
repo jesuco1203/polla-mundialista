@@ -1061,7 +1061,8 @@ label {
 .stacked-form,
 .participant-list,
 .result-list,
-.compact-list {
+.compact-list,
+.audit-list {
   display: grid;
   gap: 0.85rem;
 }
@@ -1231,6 +1232,36 @@ label {
 .result-row p {
   font-size: 0.9rem;
   font-weight: 780;
+}
+
+.audit-row {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border);
+  padding: 0.7rem 0;
+}
+
+.audit-row strong,
+.audit-row span {
+  display: block;
+}
+
+.audit-row strong {
+  font-size: 0.9rem;
+  font-weight: 860;
+}
+
+.audit-row span,
+.audit-row time {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.audit-row time {
+  flex: 0 0 auto;
+  text-align: right;
 }
 
 .compact-row {

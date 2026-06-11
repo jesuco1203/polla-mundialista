@@ -25,6 +25,23 @@ async function main() {
   await prisma.$executeRawUnsafe(
     `CREATE INDEX IF NOT EXISTS "Participant_referredById_idx" ON "Participant"("referredById")`,
   );
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "AuditLog" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "event" TEXT NOT NULL,
+      "actor" TEXT,
+      "targetType" TEXT,
+      "targetId" TEXT,
+      "payloadJson" TEXT NOT NULL,
+      "googleStatus" TEXT NOT NULL DEFAULT 'SKIPPED',
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "AuditLog_event_idx" ON "AuditLog"("event")`);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "AuditLog_createdAt_idx" ON "AuditLog"("createdAt")`);
+  await prisma.$executeRawUnsafe(
+    `CREATE INDEX IF NOT EXISTS "AuditLog_targetType_targetId_idx" ON "AuditLog"("targetType", "targetId")`,
+  );
 }
 
 main()

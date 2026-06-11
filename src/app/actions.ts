@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { logEvent } from "@/lib/audit-log";
 import { fetchWorldCupMatches } from "@/lib/football-api";
 import { makeAccessCode, scorePrediction } from "@/lib/scoring";
 
@@ -81,6 +82,16 @@ export async function registerParticipant(formData: FormData) {
     : null;
 
   if (normalizedReferralCode && !referrer) {
+    await logEvent({
+      actor: parsed.phone,
+      event: "referral.invalid",
+      payload: {
+        attemptedReferralCode: normalizedReferralCode,
+        name: parsed.name,
+        phone: parsed.phone,
+      },
+      targetType: "Participant",
+    });
     redirect(`/?ref=${encodeURIComponent(normalizedReferralCode)}&referralError=invalid#registro`);
   }
 
@@ -93,6 +104,21 @@ export async function registerParticipant(formData: FormData) {
       referralCode,
       referredById: referrer?.id ?? null,
     },
+  });
+
+  await logEvent({
+    actor: participant.phone,
+    event: "participant.registered",
+    payload: {
+      email: participant.email,
+      name: participant.name,
+      phone: participant.phone,
+      referralCode: participant.referralCode,
+      referredById: participant.referredById,
+      usedReferralCode: normalizedReferralCode || null,
+    },
+    targetId: participant.id,
+    targetType: "Participant",
   });
 
   revalidatePath("/");
@@ -125,7 +151,7 @@ export async function savePrediction(formData: FormData) {
     throw new Error("Este partido ya esta bloqueado.");
   }
 
-  await prisma.prediction.upsert({
+  const prediction = await prisma.prediction.upsert({
     where: {
       participantId_matchId: {
         participantId: participant.id,
@@ -144,6 +170,20 @@ export async function savePrediction(formData: FormData) {
     },
   });
 
+  await logEvent({
+    actor: participant.referralCode,
+    event: "prediction.saved",
+    payload: {
+      awayScore: prediction.awayScore,
+      homeScore: prediction.homeScore,
+      match: `${match.homeTeam} vs ${match.awayTeam}`,
+      matchStartsAt: match.startsAt.toISOString(),
+      participantName: participant.name,
+    },
+    targetId: prediction.id,
+    targetType: "Prediction",
+  });
+
   revalidatePath("/");
 }
 
@@ -154,12 +194,30 @@ export async function markPayment(formData: FormData) {
   const paymentStatus = String(formData.get("paymentStatus") ?? "PENDING");
   const paymentNote = String(formData.get("paymentNote") ?? "");
 
-  await prisma.participant.update({
+  const previous = await prisma.participant.findUnique({
+    where: { id: participantId },
+    select: { id: true, name: true, paymentStatus: true, referralCode: true },
+  });
+  const participant = await prisma.participant.update({
     where: { id: participantId },
     data: {
       paymentStatus,
       paymentNote: paymentNote || null,
     },
+  });
+
+  await logEvent({
+    actor: "organizer",
+    event: "payment.updated",
+    payload: {
+      name: participant.name,
+      newStatus: participant.paymentStatus,
+      note: participant.paymentNote,
+      previousStatus: previous?.paymentStatus ?? null,
+      referralCode: participant.referralCode,
+    },
+    targetId: participant.id,
+    targetType: "Participant",
   });
 
   revalidatePath("/");
@@ -182,7 +240,7 @@ export async function createMatch(formData: FormData) {
     throw new Error("Fecha de partido invalida.");
   }
 
-  await prisma.match.create({
+  const match = await prisma.match.create({
     data: {
       stage: parsed.stage,
       groupName: parsed.groupName || null,
@@ -191,6 +249,20 @@ export async function createMatch(formData: FormData) {
       startsAt,
       venue: parsed.venue || null,
     },
+  });
+
+  await logEvent({
+    actor: "organizer",
+    event: "match.created",
+    payload: {
+      awayTeam: match.awayTeam,
+      homeTeam: match.homeTeam,
+      stage: match.stage,
+      startsAt: match.startsAt.toISOString(),
+      venue: match.venue,
+    },
+    targetId: match.id,
+    targetType: "Match",
   });
 
   revalidatePath("/");
@@ -203,7 +275,7 @@ export async function updateMatchResult(formData: FormData) {
   const homeScore = z.coerce.number().int().min(0).max(30).parse(formData.get("homeScore"));
   const awayScore = z.coerce.number().int().min(0).max(30).parse(formData.get("awayScore"));
 
-  await prisma.match.update({
+  const match = await prisma.match.update({
     where: { id: matchId },
     data: {
       homeScore,
@@ -228,6 +300,20 @@ export async function updateMatchResult(formData: FormData) {
     ),
   );
 
+  await logEvent({
+    actor: "organizer",
+    event: "match.result.closed",
+    payload: {
+      awayScore,
+      awayTeam: match.awayTeam,
+      homeScore,
+      homeTeam: match.homeTeam,
+      predictionsScored: predictions.length,
+    },
+    targetId: match.id,
+    targetType: "Match",
+  });
+
   revalidatePath("/");
 }
 
@@ -242,6 +328,15 @@ export async function syncMatches(formData: FormData) {
       create: match,
     });
   }
+
+  await logEvent({
+    actor: "organizer",
+    event: "matches.synced",
+    payload: {
+      count: matches.length,
+    },
+    targetType: "Match",
+  });
 
   revalidatePath("/");
 }

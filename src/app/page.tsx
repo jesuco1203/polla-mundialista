@@ -54,7 +54,7 @@ async function getBaseUrl() {
 }
 
 async function getDashboardData() {
-  const [config, participants, matches, leaderboard] = await Promise.all([
+  const [config, participants, matches, leaderboard, auditLogs] = await Promise.all([
     prisma.poolConfig.findFirst(),
     prisma.participant.findMany({
       orderBy: { createdAt: "desc" },
@@ -75,6 +75,10 @@ async function getDashboardData() {
     prisma.participant.findMany({
       where: { paymentStatus: "PAID" },
       include: { predictions: true },
+    }),
+    prisma.auditLog.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 12,
     }),
   ]);
 
@@ -105,6 +109,7 @@ async function getDashboardData() {
     },
     participants,
     matches,
+    auditLogs,
     leaderboard: sortedLeaderboard,
   };
 }
@@ -193,7 +198,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const registeredCode = normalizeCodeParam(query.registered);
   const referralError = firstSearchParam(query.referralError);
   const baseUrl = await getBaseUrl();
-  const { config, participants, matches, leaderboard } = await getDashboardData();
+  const { config, participants, matches, auditLogs, leaderboard } = await getDashboardData();
   const registeredParticipant = registeredCode
     ? await prisma.participant.findUnique({
         where: { referralCode: registeredCode },
@@ -712,6 +717,40 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                           <strong>{participant.paidReferrals}</strong>
                           <span>{participant.totalReferrals} total</span>
                         </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="admin-card">
+                <div className="panel-header">
+                  <div>
+                    <h2>Auditoria reciente</h2>
+                    <p>Ultimos registros guardados localmente y estado de envio a Google.</p>
+                  </div>
+                  <ClipboardList className="text-[var(--accent)]" size={22} />
+                </div>
+                <div className="audit-list">
+                  {auditLogs.length === 0 ? (
+                    <p className="empty-text">Aun no hay eventos registrados.</p>
+                  ) : (
+                    auditLogs.map((log) => (
+                      <div className="audit-row" key={log.id}>
+                        <div>
+                          <strong>{log.event}</strong>
+                          <span>
+                            {log.actor ?? "sistema"} · {log.googleStatus}
+                          </span>
+                        </div>
+                        <time dateTime={log.createdAt.toISOString()}>
+                          {new Intl.DateTimeFormat("es-PE", {
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            month: "short",
+                          }).format(log.createdAt)}
+                        </time>
                       </div>
                     ))
                   )}

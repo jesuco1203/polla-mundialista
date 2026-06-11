@@ -8,6 +8,8 @@ services:
       DATABASE_URL: "file:/data/prod.db"
       ADMIN_PIN: "${ADMIN_PIN:?Configura ADMIN_PIN antes de desplegar}"
       API_FOOTBALL_KEY: "${API_FOOTBALL_KEY:-}"
+      GOOGLE_LOG_WEBHOOK_URL: "${GOOGLE_LOG_WEBHOOK_URL:-}"
+      GOOGLE_LOG_SECRET: "${GOOGLE_LOG_SECRET:-}"
     volumes:
       - polla_data:/data
     command: sh -c "sqlite3 /data/prod.db < prisma/init.sql && npm run db:ensure-referrals && npm run start"
