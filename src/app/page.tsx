@@ -726,7 +726,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   const dateParts = matchDateParts(match.startsAt);
 
                   return (
-                    <form action={savePrediction} className="match-card" key={match.id}>
+                    <form action={savePrediction} className={locked ? "match-card locked" : "match-card"} key={match.id}>
                       <div className="match-topline">
                         <span className="match-badge">{match.groupName ? `Grupo ${match.groupName}` : match.stage}</span>
                         <MatchState locked={locked} />
