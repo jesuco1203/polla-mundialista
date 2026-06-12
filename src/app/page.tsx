@@ -235,7 +235,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
     ? "Ver mi invitacion"
     : googleSession
       ? "Completar registro"
-      : "Entrar con Google";
+      : "Entrar o registrarme";
   const shouldOpenRegisterPanel = Boolean(
     invitedByCode || referralError || authError || registeredParticipant || googleSession,
   );
