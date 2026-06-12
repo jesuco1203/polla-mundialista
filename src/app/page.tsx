@@ -666,9 +666,11 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                         </>
                       ) : (
                         <label>
-                          Codigo de acceso para pronosticar
-                          <input name="accessCode" placeholder="Ej. ABC123" required disabled={locked} />
-                          <span className="field-help">Este no es tu codigo de referido.</span>
+                          Codigo para jugar
+                          <input name="accessCode" placeholder="Ej. TU1234" required disabled={locked} />
+                          <span className="field-help">
+                            Si no entraste con Google, usa el codigo que recibiste al inscribirte.
+                          </span>
                         </label>
                       )}
                       <div className="score-inputs compact">
