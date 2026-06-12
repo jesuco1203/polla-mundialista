@@ -658,8 +658,9 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                         </>
                       ) : (
                         <label>
-                          Ingresa tu codigo
-                          <input name="accessCode" placeholder="DEMO2026" required disabled={locked} />
+                          Codigo de acceso para pronosticar
+                          <input name="accessCode" placeholder="Ej. ABC123" required disabled={locked} />
+                          <span className="field-help">Este no es tu codigo de referido.</span>
                         </label>
                       )}
                       <div className="score-inputs compact">

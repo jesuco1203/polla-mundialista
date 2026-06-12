@@ -810,6 +810,13 @@ label {
   padding-left: 0.7rem;
 }
 
+.field-help {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  font-weight: 650;
+  margin-top: 0.25rem;
+}
+
 .existing-user {
   border-radius: 8px;
   background: var(--surface-raised);
