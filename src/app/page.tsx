@@ -594,77 +594,98 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
 
             {!googleSession && !googleParticipant && !sessionParticipant && !registeredParticipant ? (
               <div className="guided-entry-card">
-                <div className="guided-entry-header">
-                  <span className="step-number">1</span>
-                  <div>
-                    <h2>Escribe tu celular</h2>
-                    <p>Lo usamos para identificar tu cuenta y validar tu pago.</p>
-                  </div>
+                <input className="auth-mode-input" id="auth-mode-register" name="authMode" type="radio" defaultChecked />
+                <input className="auth-mode-input" id="auth-mode-login" name="authMode" type="radio" />
+
+                <div className="auth-mode-buttons" aria-label="Elige que quieres hacer">
+                  <label htmlFor="auth-mode-login">Ya tengo cuenta</label>
+                  <label htmlFor="auth-mode-register">Registrarme</label>
                 </div>
 
-                <div className="guided-entry-body">
-                  <form action={registerParticipant} className="stacked-form">
-                    <label>
-                      Nombre
-                      <input name="name" placeholder="Ej. Juan Perez" required />
-                    </label>
-                    <label>
-                      Celular / WhatsApp
-                      <input name="phone" placeholder="Ej. 999 999 999" required />
-                    </label>
-
-                    <div className="guided-entry-header compact">
-                      <span className="step-number">2</span>
+                <div className="auth-mode-panels">
+                  <div className="auth-mode-panel register-mode-panel">
+                    <div className="guided-entry-header">
+                      <span className="step-number">1</span>
                       <div>
-                        <h3>Elige como vas a entrar</h3>
-                        <p>Escoge solo una forma: Google o contraseña.</p>
+                        <h2>Escribe tu celular</h2>
+                        <p>Lo usamos para identificar tu cuenta y validar tu pago.</p>
                       </div>
                     </div>
 
-                    <div className="entry-method-card google-method-card">
-                      <span className="method-label">Opcion rapida</span>
-                      <strong>Entrar con Google</strong>
-                      <a className="google-button guided-google-button" href={googleLoginHref}>
-                        <span className="google-logo" aria-hidden="true">G</span>
-                        Usar Google
-                      </a>
-                    </div>
+                    <div className="guided-entry-body">
+                      <form action={registerParticipant} className="stacked-form">
+                        <label>
+                          Nombre
+                          <input name="name" placeholder="Ej. Juan Perez" required />
+                        </label>
+                        <label>
+                          Celular / WhatsApp
+                          <input name="phone" placeholder="Ej. 999 999 999" required />
+                        </label>
 
-                    <div className="entry-method-divider" aria-hidden="true">
-                      <span>O</span>
-                    </div>
+                        <div className="guided-entry-header compact">
+                          <span className="step-number">2</span>
+                          <div>
+                            <h3>Elige como vas a entrar</h3>
+                            <p>Escoge solo una forma: Google o contraseña.</p>
+                          </div>
+                        </div>
 
-                    <div className="entry-method-card password-choice">
-                      <span className="method-label">Opcion con celular</span>
-                      <strong>Crear contraseña</strong>
-                      <label>
-                        Tu contraseña
-                        <PasswordField name="password" placeholder="Minimo 4 caracteres" />
-                      </label>
-                      <input name="email" type="hidden" value="" />
-                      <input name="referralCode" type="hidden" value={invitedByCode} />
-                      <button className="primary-button" type="submit">
-                        Crear cuenta con contraseña
-                      </button>
-                    </div>
-                  </form>
+                        <div className="entry-method-card google-method-card">
+                          <span className="method-label">Opcion rapida</span>
+                          <strong>Entrar con Google</strong>
+                          <a className="google-button guided-google-button" href={googleLoginHref}>
+                            <span className="google-logo" aria-hidden="true">G</span>
+                            Usar Google
+                          </a>
+                        </div>
 
-                  <div className="phone-login-box">
-                    <strong>Ya tengo cuenta</strong>
-                    <span>Entra con tu celular y contraseña.</span>
-                    <form action={loginParticipant} className="stacked-form compact">
-                      <label>
-                        Celular
-                        <input name="phone" placeholder="Ej. 999 999 999" required />
-                      </label>
-                      <label>
-                        Contraseña
-                        <PasswordField name="password" placeholder="Tu contraseña" />
-                      </label>
-                      <button className="secondary-button" type="submit">
-                        Entrar con contraseña
-                      </button>
-                    </form>
+                        <div className="entry-method-divider" aria-hidden="true">
+                          <span>O</span>
+                        </div>
+
+                        <div className="entry-method-card password-choice">
+                          <span className="method-label">Opcion con celular</span>
+                          <strong>Crear contraseña</strong>
+                          <label>
+                            Tu contraseña
+                            <PasswordField name="password" placeholder="Minimo 4 caracteres" />
+                          </label>
+                          <input name="email" type="hidden" value="" />
+                          <input name="referralCode" type="hidden" value={invitedByCode} />
+                          <button className="primary-button" type="submit">
+                            Crear cuenta con contraseña
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+
+                  <div className="auth-mode-panel login-mode-panel">
+                    <div className="phone-login-box standalone">
+                      <strong>Ya tengo cuenta</strong>
+                      <span>Entra solo con tu celular y contraseña.</span>
+                      <form action={loginParticipant} className="stacked-form compact">
+                        <label>
+                          Celular
+                          <input name="phone" placeholder="Ej. 999 999 999" required />
+                        </label>
+                        <label>
+                          Contraseña
+                          <PasswordField name="password" placeholder="Tu contraseña" />
+                        </label>
+                        <button className="primary-button" type="submit">
+                          Entrar con contraseña
+                        </button>
+                      </form>
+                      <div className="login-google-shortcut">
+                        <span>O entra rapido con Google</span>
+                        <a className="google-button guided-google-button" href={googleLoginHref}>
+                          <span className="google-logo" aria-hidden="true">G</span>
+                          Usar Google
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -1090,6 +1090,54 @@ label {
   box-shadow: var(--shadow-card);
 }
 
+.auth-mode-input {
+  position: absolute;
+  opacity: 0;
+}
+
+.auth-mode-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 0.35rem;
+}
+
+.auth-mode-buttons label {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 46px;
+  border-radius: 7px;
+  color: var(--muted-foreground);
+  font-size: 0.92rem;
+  font-weight: 920;
+  text-align: center;
+}
+
+#auth-mode-login:checked ~ .auth-mode-buttons label[for="auth-mode-login"],
+#auth-mode-register:checked ~ .auth-mode-buttons label[for="auth-mode-register"] {
+  background: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 10px 22px rgba(11, 143, 84, 0.22);
+}
+
+.auth-mode-panels {
+  display: grid;
+}
+
+.auth-mode-panel {
+  display: none;
+}
+
+#auth-mode-register:checked ~ .auth-mode-panels .register-mode-panel,
+#auth-mode-login:checked ~ .auth-mode-panels .login-mode-panel {
+  display: grid;
+}
+
 .guided-entry-header {
   align-items: flex-start;
   display: flex;
@@ -1205,6 +1253,11 @@ label {
   background: #f8fbf8;
 }
 
+.phone-login-box.standalone {
+  border-color: rgba(8, 88, 54, 0.24);
+  background: #ffffff;
+}
+
 .phone-login-box strong {
   color: var(--foreground);
   font-size: 0.98rem;
@@ -1215,6 +1268,20 @@ label {
   color: var(--muted-foreground);
   font-size: 0.84rem;
   line-height: 1.4;
+}
+
+.login-google-shortcut {
+  display: grid;
+  gap: 0.55rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.8rem;
+}
+
+.login-google-shortcut span {
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  font-weight: 760;
+  text-align: center;
 }
 
 .helper-text {
