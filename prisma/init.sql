@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS "Participant" (
     "name" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
     "email" TEXT,
+    "passwordHash" TEXT,
     "accessCode" TEXT NOT NULL,
     "referralCode" TEXT NOT NULL,
     "referredById" TEXT,

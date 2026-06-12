@@ -15,6 +15,15 @@ import {
 import { logEvent } from "@/lib/audit-log";
 import { fetchWorldCupMatches } from "@/lib/football-api";
 import { getGoogleSession } from "@/lib/google-auth";
+import {
+  PARTICIPANT_SESSION_COOKIE,
+  createParticipantSessionCookie,
+  getParticipantSession,
+  hashParticipantPassword,
+  normalizeParticipantPhone,
+  participantCookieOptions,
+  verifyParticipantPassword,
+} from "@/lib/participant-auth";
 import { parsePeruDateTimeInput } from "@/lib/date-format";
 import { REFERRAL_INVITE_LIMIT } from "@/lib/referral-bonus";
 import { makeAccessCode, scorePrediction } from "@/lib/scoring";
@@ -22,8 +31,14 @@ import { makeAccessCode, scorePrediction } from "@/lib/scoring";
 const participantSchema = z.object({
   name: z.string().trim().min(2).max(80),
   phone: z.string().trim().min(6).max(30),
+  password: z.string().trim().min(4).max(72),
   email: z.string().trim().email().optional().or(z.literal("")),
   referralCode: z.string().trim().max(20).optional().or(z.literal("")),
+});
+
+const participantLoginSchema = z.object({
+  phone: z.string().trim().min(6).max(30),
+  password: z.string().trim().min(4).max(72),
 });
 
 const predictionSchema = z.object({
@@ -91,9 +106,19 @@ export async function registerParticipant(formData: FormData) {
   const parsed = participantSchema.parse({
     name: formData.get("name"),
     phone: formData.get("phone"),
+    password: formData.get("password"),
     email: formData.get("email") || undefined,
     referralCode: formData.get("referralCode") || undefined,
   });
+
+  const phone = normalizeParticipantPhone(parsed.phone);
+  const existingParticipant = await prisma.participant.findFirst({
+    where: { phone },
+    select: { id: true },
+  });
+  if (existingParticipant) {
+    redirect("/?loginError=account_exists#registro");
+  }
 
   const accessCode = await makeUniqueParticipantCode("accessCode");
   const referralCode = await makeUniqueParticipantCode("referralCode");
@@ -117,7 +142,7 @@ export async function registerParticipant(formData: FormData) {
       payload: {
         attemptedReferralCode: normalizedReferralCode,
         name: parsed.name,
-        phone: parsed.phone,
+        phone,
       },
       targetType: "Participant",
     });
@@ -132,7 +157,7 @@ export async function registerParticipant(formData: FormData) {
         attemptedReferralCode: normalizedReferralCode,
         limit: REFERRAL_INVITE_LIMIT,
         name: parsed.name,
-        phone: parsed.phone,
+        phone,
       },
       targetId: referrer.id,
       targetType: "Participant",
@@ -143,7 +168,8 @@ export async function registerParticipant(formData: FormData) {
   const participant = await prisma.participant.create({
     data: {
       name: parsed.name,
-      phone: parsed.phone,
+      phone,
+      passwordHash: await hashParticipantPassword(parsed.password),
       email: parsed.email || null,
       accessCode,
       referralCode,
@@ -166,8 +192,58 @@ export async function registerParticipant(formData: FormData) {
     targetType: "Participant",
   });
 
+  const cookieStore = await cookies();
+  cookieStore.set(
+    PARTICIPANT_SESSION_COOKIE,
+    createParticipantSessionCookie(participant.id),
+    participantCookieOptions(),
+  );
+
   revalidatePath("/");
   redirect(`/?registered=${encodeURIComponent(participant.referralCode)}#registro`);
+}
+
+export async function loginParticipant(formData: FormData) {
+  const parsed = participantLoginSchema.parse({
+    phone: formData.get("phone"),
+    password: formData.get("password"),
+  });
+  const phone = normalizeParticipantPhone(parsed.phone);
+  const participant = await prisma.participant.findFirst({
+    where: { phone },
+    select: {
+      id: true,
+      name: true,
+      passwordHash: true,
+      phone: true,
+      referralCode: true,
+    },
+  });
+
+  if (!participant || !(await verifyParticipantPassword(parsed.password, participant.passwordHash))) {
+    redirect("/?loginError=invalid#registro");
+  }
+
+  const cookieStore = await cookies();
+  cookieStore.set(
+    PARTICIPANT_SESSION_COOKIE,
+    createParticipantSessionCookie(participant.id),
+    participantCookieOptions(),
+  );
+
+  await logEvent({
+    actor: participant.phone,
+    event: "auth.participant_login",
+    payload: {
+      method: "phone_password",
+      name: participant.name,
+    },
+    targetId: participant.id,
+    targetType: "AuthSession",
+  });
+
+  revalidatePath("/");
+  redirect(`/?registered=${encodeURIComponent(participant.referralCode)}#participante`);
 }
 
 export async function completeGoogleParticipantPhone(formData: FormData) {
@@ -205,12 +281,17 @@ export async function savePrediction(formData: FormData) {
   });
 
   const accessCode = normalizeCode(parsed.accessCode);
-  const googleSession = accessCode ? null : await getGoogleSession();
+  const participantSession = accessCode ? null : await getParticipantSession();
+  const googleSession = accessCode || participantSession ? null : await getGoogleSession();
   const participant = accessCode
     ? await prisma.participant.findUnique({
         where: { accessCode },
       })
-    : googleSession?.email
+    : participantSession?.participantId
+      ? await prisma.participant.findUnique({
+          where: { id: participantSession.participantId },
+        })
+      : googleSession?.email
       ? await prisma.participant.findFirst({
           where: { email: { equals: googleSession.email } },
         })

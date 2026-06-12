@@ -21,6 +21,7 @@ import Image from "next/image";
 import { headers } from "next/headers";
 import {
   completeGoogleParticipantPhone,
+  loginParticipant,
   registerParticipant,
   savePrediction,
 } from "@/app/actions";
@@ -28,6 +29,7 @@ import { ReferralShare } from "@/app/referral-share";
 import { ScoreStepper } from "@/app/score-stepper";
 import { peruDayKey } from "@/lib/date-format";
 import { getGoogleSession } from "@/lib/google-auth";
+import { getParticipantSession } from "@/lib/participant-auth";
 import { prisma } from "@/lib/prisma";
 import {
   REFERRAL_INVITE_LIMIT,
@@ -44,6 +46,7 @@ type HomeSearchParams = Promise<{
   registered?: string | string[];
   referralError?: string | string[];
   authError?: string | string[];
+  loginError?: string | string[];
   predictionNotice?: string | string[];
 }>;
 
@@ -241,16 +244,21 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const registeredCode = normalizeCodeParam(query.registered);
   const referralError = firstSearchParam(query.referralError);
   const authError = firstSearchParam(query.authError);
+  const loginError = firstSearchParam(query.loginError);
   const predictionNotice = firstSearchParam(query.predictionNotice);
   const baseUrl = await getBaseUrl();
   const googleSession = await getGoogleSession();
+  const participantSession = await getParticipantSession();
   const { config, participants, matches, leaderboard } = await getDashboardData();
   const registeredParticipant = registeredCode
     ? await prisma.participant.findUnique({
         where: { referralCode: registeredCode },
         select: {
           accessCode: true,
+          id: true,
           name: true,
+          paymentStatus: true,
+          phone: true,
           referralCode: true,
           referredBy: {
             select: { name: true },
@@ -262,8 +270,33 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const googleParticipant = googleSession?.email
     ? participants.find((participant) => participant.email?.toLowerCase() === googleSession.email.toLowerCase()) ?? null
     : null;
+  const sessionParticipant = participantSession?.participantId
+    ? participants.find((participant) => participant.id === participantSession.participantId) ?? null
+    : null;
   const googleParticipantNeedsPhone = Boolean(
     googleParticipant && ["", "Google"].includes(googleParticipant.phone.trim()),
+  );
+  const activeParticipant = googleParticipant ?? sessionParticipant ?? registeredParticipant;
+  const activeParticipantId = activeParticipant?.id ?? null;
+  const myPredictions = activeParticipantId
+    ? await prisma.prediction.findMany({
+        where: { participantId: activeParticipantId },
+        include: { match: true },
+        orderBy: { updatedAt: "desc" },
+      })
+    : [];
+  const predictionsByDay = myPredictions.reduce<Array<{ date: string; predictions: typeof myPredictions }>>(
+    (days, prediction) => {
+      const date = matchDateParts(prediction.match.startsAt).date;
+      const existingDay = days.find((day) => day.date === date);
+      if (existingDay) {
+        existingDay.predictions.push(prediction);
+      } else {
+        days.push({ date, predictions: [prediction] });
+      }
+      return days;
+    },
+    [],
   );
   const potCents = paidParticipants.length * config.entryFeeCents;
   const winnerCents = Math.floor((potCents * config.winnerShare) / 100);
@@ -280,10 +313,10 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const googleLoginHref = invitedByCode
     ? `/api/auth/google?ref=${encodeURIComponent(invitedByCode)}`
     : "/api/auth/google";
-  const hasParticipant = Boolean(googleParticipant || registeredParticipant);
+  const hasParticipant = Boolean(activeParticipant);
   const primaryHeroHref = hasParticipant ? "#participante" : "#registro";
   const primaryHeroLabel = hasParticipant ? "Haz tu pronostico" : "Registrar / Entrar";
-  const loggedParticipantName = googleParticipant?.name ?? registeredParticipant?.name ?? "";
+  const loggedParticipantName = activeParticipant?.name ?? "";
   const loggedParticipantShortName = shortAccountName(loggedParticipantName);
 
   return (
@@ -303,15 +336,15 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             <a href="#participante">Pronosticos</a>
             <a href="#referidos">Referidos</a>
           </nav>
-          {googleSession ? (
+          {activeParticipant ? (
             <details className="user-menu">
               <summary>
-                <span className="user-avatar">{googleSession.name.slice(0, 1).toUpperCase()}</span>
-                <span>Hola, {googleSession.name.split(" ")[0]}</span>
+                <span className="user-avatar">{activeParticipant.name.slice(0, 1).toUpperCase()}</span>
+                <span>Hola, {activeParticipant.name.split(" ")[0]}</span>
                 <ChevronRight size={16} />
               </summary>
               <div>
-                <a href={googleParticipant ? "#registro" : "#participante"}>Mi perfil</a>
+                <a href={hasParticipant ? "#registro" : "#participante"}>Mi perfil</a>
                 <form action="/api/auth/logout" method="post">
                   <button type="submit">
                     <LogOut size={16} />
@@ -364,9 +397,9 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
               </a>
             </div>
             <div className="auth-strip">
-              {googleSession ? (
+              {activeParticipant ? (
                 <>
-                  <span>{googleSession.name}</span>
+                  <span>{activeParticipant.name}</span>
                   <form action="/api/auth/logout" method="post">
                     <button className="google-button subtle" type="submit">
                       <LogOut size={16} />
@@ -550,50 +583,78 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   : "No pudimos completar el ingreso con Google. Intenta otra vez."}
               </div>
             ) : null}
+            {loginError ? (
+              <div className="registration-alert">
+                {loginError === "account_exists"
+                  ? "Ese WhatsApp ya tiene una cuenta. Entra con tu celular y contraseña."
+                  : "Celular o contraseña incorrectos. Revisa tus datos e intenta otra vez."}
+              </div>
+            ) : null}
 
-            {!googleSession && !googleParticipant && !registeredParticipant ? (
-              <div className="entry-options">
-                <div className="entry-card existing-user entry-google-card">
+            {!googleSession && !googleParticipant && !sessionParticipant && !registeredParticipant ? (
+              <div className="guided-entry-card">
+                <div className="guided-entry-header">
+                  <span className="step-number">1</span>
                   <div>
-                    <Lock size={18} />
-                    <h2>Opcion 1: Entrar con Google</h2>
-                  </div>
-                  <p>Recomendado si quieres entrar rapido con tu correo.</p>
-                  <div className="auth-actions">
-                    {googleSession ? null : (
-                      <a className="google-button" href={googleLoginHref}>
-                        <span className="google-logo" aria-hidden="true">G</span>
-                        Entrar con Google
-                      </a>
-                    )}
+                    <h2>Escribe tu celular</h2>
+                    <p>Lo usamos para identificar tu cuenta y validar tu pago.</p>
                   </div>
                 </div>
 
-                <div className="entry-divider" aria-hidden="true">
-                  <span>O</span>
-                </div>
-
-                <div className="entry-card entry-whatsapp-card">
-                  <div>
-                    <UserPlus size={18} />
-                    <h2>Opcion 2: Crear cuenta con WhatsApp</h2>
-                  </div>
-                  <p>Usa esta opcion si prefieres registrarte solo con tu nombre y numero.</p>
+                <div className="guided-entry-body">
                   <form action={registerParticipant} className="stacked-form">
                     <label>
                       Nombre
                       <input name="name" placeholder="Ej. Juan Perez" required />
                     </label>
                     <label>
-                      WhatsApp
+                      Celular / WhatsApp
                       <input name="phone" placeholder="Ej. 999 999 999" required />
                     </label>
-                    <input name="email" type="hidden" value="" />
-                    <input name="referralCode" type="hidden" value={invitedByCode} />
-                    <button className="primary-button" type="submit">
-                      Crear cuenta con WhatsApp
-                    </button>
+
+                    <div className="guided-entry-header compact">
+                      <span className="step-number">2</span>
+                      <div>
+                        <h3>Elige como vas a entrar</h3>
+                        <p>Usa Google o crea una contraseña. Solo necesitas una opcion.</p>
+                      </div>
+                    </div>
+
+                    <a className="google-button guided-google-button" href={googleLoginHref}>
+                      <span className="google-logo" aria-hidden="true">G</span>
+                      Entrar con Google
+                    </a>
+
+                    <div className="password-choice">
+                      <label>
+                        Crear contraseña
+                        <input name="password" type="password" placeholder="Minimo 4 caracteres" required minLength={4} />
+                      </label>
+                      <input name="email" type="hidden" value="" />
+                      <input name="referralCode" type="hidden" value={invitedByCode} />
+                      <button className="primary-button" type="submit">
+                        Crear cuenta con contraseña
+                      </button>
+                    </div>
                   </form>
+
+                  <div className="phone-login-box">
+                    <strong>Ya tengo cuenta</strong>
+                    <span>Entra con tu celular y contraseña.</span>
+                    <form action={loginParticipant} className="stacked-form compact">
+                      <label>
+                        Celular
+                        <input name="phone" placeholder="Ej. 999 999 999" required />
+                      </label>
+                      <label>
+                        Contraseña
+                        <input name="password" type="password" placeholder="Tu contraseña" required minLength={4} />
+                      </label>
+                      <button className="secondary-button" type="submit">
+                        Entrar con contraseña
+                      </button>
+                    </form>
+                  </div>
                 </div>
               </div>
             ) : null}
@@ -662,7 +723,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                       </div>
 
                       <input type="hidden" name="matchId" value={match.id} />
-                      {googleParticipant || registeredParticipant ? (
+                      {registeredParticipant ? (
                         <input name="accessCode" type="hidden" value={registeredParticipant?.accessCode ?? ""} />
                       ) : null}
 
@@ -702,7 +763,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                           <div>
                             <strong>Tu pronostico</strong>
                             <span>
-                              {googleParticipant || registeredParticipant
+                              {activeParticipant
                                 ? "Queda guardado a tu nombre."
                                 : "Si no has entrado, te pediremos crear cuenta al guardar."}
                             </span>
@@ -710,9 +771,9 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                           <Info size={19} aria-hidden="true" />
                         </div>
                         <ScoreStepper homeTeam={match.homeTeam} awayTeam={match.awayTeam} locked={locked} />
-                        {googleParticipant || registeredParticipant ? (
+                        {activeParticipant ? (
                           <p className="helper-text">
-                            Pronosticas como {googleParticipant?.name ?? registeredParticipant?.name}.
+                            Pronosticas como {activeParticipant.name}.
                           </p>
                         ) : null}
                       </div>
@@ -725,6 +786,47 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 })
               )}
             </div>
+
+            {activeParticipant ? (
+              <article className="my-predictions-card" id="mis-pronosticos">
+                <div className="prediction-history-title">
+                  <div>
+                    <span>Tu historial</span>
+                    <strong>Mis pronosticos</strong>
+                  </div>
+                  <small>{myPredictions.length} guardados</small>
+                </div>
+                {predictionsByDay.length === 0 ? (
+                  <p className="empty-text">Aun no has guardado pronosticos. Cuando guardes uno, aparecera aqui.</p>
+                ) : (
+                  <div className="prediction-history-list">
+                    {predictionsByDay.map((day) => (
+                      <div className="prediction-day" key={day.date}>
+                        <h3>{day.date}</h3>
+                        {day.predictions.map((prediction) => {
+                          const dateParts = matchDateParts(prediction.match.startsAt);
+                          const resolved =
+                            prediction.match.homeScore !== null && prediction.match.awayScore !== null;
+
+                          return (
+                            <div className="prediction-history-row" key={prediction.id}>
+                              <div>
+                                <strong>
+                                  {teamCode(prediction.match.homeTeam)} {prediction.homeScore} - {prediction.awayScore}{" "}
+                                  {teamCode(prediction.match.awayTeam)}
+                                </strong>
+                                <span>{dateParts.time} · {prediction.match.homeTeam} vs {prediction.match.awayTeam}</span>
+                              </div>
+                              <small>{resolved ? `+${prediction.points} pts` : "Pendiente"}</small>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </article>
+            ) : null}
 
             <article className="mobile-points-card">
               <div className="mobile-points-title">

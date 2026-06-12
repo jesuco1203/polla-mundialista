@@ -24,6 +24,7 @@ model Participant {
   name          String
   phone         String
   email         String?
+  passwordHash  String?
   accessCode    String        @unique
   referralCode  String        @unique
   referredById  String?
