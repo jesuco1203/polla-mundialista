@@ -491,8 +491,8 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                     <input name="email" type="email" placeholder="correo@dominio.com" defaultValue={googleSession?.email ?? ""} />
                   </label>
                   <label>
-                    Codigo de quien te invito
-                    <input name="referralCode" placeholder="Ej. DEMO2026" defaultValue={invitedByCode} />
+                    Codigo de quien te invito (opcional)
+                    <input name="referralCode" placeholder="Puedes dejarlo vacio" defaultValue={invitedByCode} />
                   </label>
                   <button className="primary-button" type="submit">
                     Inscribirme
