@@ -513,12 +513,16 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
 
             {!googleParticipant && !registeredParticipant ? (
               <div className="entry-options">
+                <div className="entry-choice-intro">
+                  <strong>Elige una sola forma de entrar</strong>
+                  <span>Puedes usar Google o crear tu cuenta con nombre y WhatsApp. No necesitas hacer ambas.</span>
+                </div>
                 <div className="entry-card existing-user">
                   <div>
                     <Lock size={18} />
-                    <h2>Entrar con Google</h2>
+                    <h2>Opcion 1: Entrar con Google</h2>
                   </div>
-                  <p>Si ya tienes cuenta o quieres entrar rapido, usa tu correo de Google.</p>
+                  <p>Recomendado si quieres entrar rapido con tu correo.</p>
                   <div className="auth-actions">
                     {googleSession ? null : (
                       <a className="google-button" href="/api/auth/google">
@@ -529,12 +533,16 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   </div>
                 </div>
 
+                <div className="entry-divider" aria-hidden="true">
+                  <span>O</span>
+                </div>
+
                 <div className="entry-card">
                   <div>
                     <UserPlus size={18} />
-                    <h2>Ingresar con WhatsApp</h2>
+                    <h2>Opcion 2: Crear cuenta con WhatsApp</h2>
                   </div>
-                  <p>Solo necesitamos tu nombre y WhatsApp para crear tu inscripcion.</p>
+                  <p>Usa esta opcion si prefieres registrarte solo con tu nombre y numero.</p>
                   <form action={registerParticipant} className="stacked-form">
                     <label>
                       Nombre
@@ -547,7 +555,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                     <input name="email" type="hidden" value={googleSession?.email ?? ""} />
                     <input name="referralCode" type="hidden" value={invitedByCode} />
                     <button className="primary-button" type="submit">
-                      Inscribirme
+                      Crear cuenta con WhatsApp
                     </button>
                   </form>
                 </div>

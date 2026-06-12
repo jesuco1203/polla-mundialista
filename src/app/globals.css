@@ -914,6 +914,27 @@ label {
   gap: 0.85rem;
 }
 
+.entry-choice-intro {
+  display: grid;
+  gap: 0.22rem;
+  border: 1px solid rgba(16, 145, 86, 0.22);
+  border-radius: 8px;
+  background: #eaf8f0;
+  padding: 0.85rem;
+}
+
+.entry-choice-intro strong {
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.entry-choice-intro span {
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
 .entry-card {
   display: grid;
   gap: 0.8rem;
@@ -922,6 +943,35 @@ label {
 .entry-card + .entry-card {
   border-top: 1px solid var(--border);
   padding-top: 0.95rem;
+}
+
+.entry-divider {
+  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  color: var(--muted-foreground);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.entry-divider::before,
+.entry-divider::after {
+  content: "";
+  height: 1px;
+  background: var(--border);
+}
+
+.entry-divider span {
+  align-items: center;
+  display: inline-flex;
+  height: 30px;
+  justify-content: center;
+  width: 30px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
 }
 
 .entry-card > div {
