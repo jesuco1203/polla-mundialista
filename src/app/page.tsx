@@ -3,7 +3,6 @@ import {
   ChevronRight,
   CircleDollarSign,
   Clock3,
-  LogIn,
   LogOut,
   Lock,
   Medal,
@@ -229,7 +228,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const closeDays = Math.floor(closeDiffMs / 86_400_000);
   const closeHours = Math.floor((closeDiffMs % 86_400_000) / 3_600_000);
   const closeMinutes = Math.floor((closeDiffMs % 3_600_000) / 60_000);
-  const primaryHeroHref = googleSession ? "#registro" : "/api/auth/google";
+  const primaryHeroHref = "#registro";
   const primaryHeroLabel = googleParticipant
     ? "Ver mi invitacion"
     : googleSession
@@ -517,45 +516,36 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 <div className="entry-card existing-user">
                   <div>
                     <Lock size={18} />
-                    <h2>Ya estoy inscrito</h2>
+                    <h2>Entrar con Google</h2>
                   </div>
-                  <p>Usa Google si tu correo ya esta inscrito, o tu codigo en cualquier partido abierto.</p>
+                  <p>Si ya tienes cuenta o quieres entrar rapido, usa tu correo de Google.</p>
                   <div className="auth-actions">
                     {googleSession ? null : (
                       <a className="google-button" href="/api/auth/google">
-                        <LogIn size={16} />
+                        <span className="google-logo" aria-hidden="true">G</span>
                         Entrar con Google
                       </a>
                     )}
-                    <a href="#participante" className="secondary-button">
-                      Ir a pronosticos
-                    </a>
                   </div>
                 </div>
 
                 <div className="entry-card">
                   <div>
                     <UserPlus size={18} />
-                    <h2>Nuevo participante</h2>
+                    <h2>Ingresar con WhatsApp</h2>
                   </div>
-                  <p>Completa tus datos y envia tu comprobante. El codigo se activa cuando el pago queda confirmado.</p>
+                  <p>Solo necesitamos tu nombre y WhatsApp para crear tu inscripcion.</p>
                   <form action={registerParticipant} className="stacked-form">
                     <label>
-                      Nombre completo
+                      Nombre
                       <input name="name" placeholder="Ej. Juan Perez" defaultValue={googleSession?.name ?? ""} required />
                     </label>
                     <label>
                       WhatsApp
                       <input name="phone" placeholder="Ej. 999 999 999" required />
                     </label>
-                    <label>
-                      Correo opcional
-                      <input name="email" type="email" placeholder="correo@dominio.com" defaultValue={googleSession?.email ?? ""} />
-                    </label>
-                    <label>
-                      Codigo de quien te invito (opcional)
-                      <input name="referralCode" placeholder="Puedes dejarlo vacio" defaultValue={invitedByCode} />
-                    </label>
+                    <input name="email" type="hidden" value={googleSession?.email ?? ""} />
+                    <input name="referralCode" type="hidden" value={invitedByCode} />
                     <button className="primary-button" type="submit">
                       Inscribirme
                     </button>
@@ -682,10 +672,12 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                       </p>
 
                       <input type="hidden" name="matchId" value={match.id} />
-                      {googleParticipant ? (
+                      {googleParticipant || registeredParticipant ? (
                         <>
-                          <input name="accessCode" type="hidden" value="" />
-                          <p className="helper-text">Pronosticas como {googleParticipant.name}.</p>
+                          <input name="accessCode" type="hidden" value={registeredParticipant?.accessCode ?? ""} />
+                          <p className="helper-text">
+                            Pronosticas como {googleParticipant?.name ?? registeredParticipant?.name}.
+                          </p>
                         </>
                       ) : null}
                       <div className="score-inputs compact">

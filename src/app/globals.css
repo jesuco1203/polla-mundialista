@@ -1277,6 +1277,20 @@ label {
   transform: translateY(-1px);
 }
 
+.google-logo {
+  align-items: center;
+  display: inline-flex;
+  height: 22px;
+  justify-content: center;
+  width: 22px;
+  border-radius: 50%;
+  background: conic-gradient(from -45deg, #4285f4 0 25%, #34a853 0 50%, #fbbc05 0 75%, #ea4335 0 100%);
+  color: #ffffff;
+  font-family: Arial, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
 .google-button.subtle {
   min-height: 38px;
 }
