@@ -221,7 +221,7 @@ export async function savePrediction(formData: FormData) {
   }
 
   if (participant.paymentStatus !== "PAID") {
-    throw new Error("El organizador debe confirmar el pago antes de pronosticar.");
+    redirect("/?predictionNotice=payment#participante");
   }
 
   const match = await prisma.match.findUnique({ where: { id: parsed.matchId } });

@@ -1047,6 +1047,11 @@ label {
   line-height: 1.45;
 }
 
+.payment-pending-alert {
+  border-color: rgba(185, 130, 33, 0.34);
+  background: linear-gradient(135deg, #fff7e6, #ffffff);
+}
+
 .prediction-login-alert .primary-button,
 .prediction-login-alert .secondary-button {
   width: auto;

@@ -699,6 +699,19 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 </div>
               </div>
             ) : null}
+            {predictionNotice === "payment" ? (
+              <div className="prediction-login-alert payment-pending-alert">
+                <div>
+                  <strong>Tu pronostico aun no se guardo porque falta confirmar tu pago.</strong>
+                  <span>Cuando el organizador apruebe tu pago de inscripcion, podras guardar marcadores y sumar puntos.</span>
+                </div>
+                <div className="auth-actions">
+                  <a className="primary-button" href="#registro">
+                    Ver mi inscripcion
+                  </a>
+                </div>
+              </div>
+            ) : null}
 
             <div className="match-grid">
               {displayMatches.length === 0 ? (
