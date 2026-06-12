@@ -437,6 +437,11 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   </div>
                 </div>
                 <ReferralShare baseUrl={baseUrl} code={registeredParticipant.referralCode} />
+                <div className="auth-actions participant-shortcuts">
+                  <a href="#participante" className="primary-button">
+                    Ir a pronosticos
+                  </a>
+                </div>
               </>
             ) : null}
             {googleParticipant && !registeredParticipant ? (
@@ -454,6 +459,11 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   </div>
                 </div>
                 <ReferralShare baseUrl={baseUrl} code={googleParticipant.referralCode} />
+                <div className="auth-actions participant-shortcuts">
+                  <a href="#participante" className="primary-button">
+                    Ir a pronosticos
+                  </a>
+                </div>
               </>
             ) : null}
             {googleSession && !googleParticipant && !registeredParticipant ? (
@@ -481,59 +491,57 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
               </div>
             ) : null}
 
-            <div className="entry-options">
-              <div className="entry-card existing-user">
-                <div>
-                  <Lock size={18} />
-                  <h2>Ya estoy inscrito</h2>
-                </div>
-                {googleParticipant ? (
-                  <p>Entraste como {googleParticipant.name}. Puedes pronosticar y compartir tu link de invitacion.</p>
-                ) : (
+            {!googleParticipant && !registeredParticipant ? (
+              <div className="entry-options">
+                <div className="entry-card existing-user">
+                  <div>
+                    <Lock size={18} />
+                    <h2>Ya estoy inscrito</h2>
+                  </div>
                   <p>Usa Google si tu correo ya esta inscrito, o tu codigo en cualquier partido abierto.</p>
-                )}
-                <div className="auth-actions">
-                  {googleSession ? null : (
-                    <a className="google-button" href="/api/auth/google">
-                      <LogIn size={16} />
-                      Entrar con Google
+                  <div className="auth-actions">
+                    {googleSession ? null : (
+                      <a className="google-button" href="/api/auth/google">
+                        <LogIn size={16} />
+                        Entrar con Google
+                      </a>
+                    )}
+                    <a href="#participante" className="secondary-button">
+                      Ir a pronosticos
                     </a>
-                  )}
-                  <a href="#participante" className="secondary-button">
-                    Ir a pronosticos
-                  </a>
+                  </div>
                 </div>
-              </div>
 
-              <div className="entry-card">
-                <div>
-                  <UserPlus size={18} />
-                  <h2>Nuevo participante</h2>
+                <div className="entry-card">
+                  <div>
+                    <UserPlus size={18} />
+                    <h2>Nuevo participante</h2>
+                  </div>
+                  <p>Completa tus datos y envia tu comprobante. El codigo se activa cuando el pago queda confirmado.</p>
+                  <form action={registerParticipant} className="stacked-form">
+                    <label>
+                      Nombre completo
+                      <input name="name" placeholder="Ej. Juan Perez" defaultValue={googleSession?.name ?? ""} required />
+                    </label>
+                    <label>
+                      WhatsApp
+                      <input name="phone" placeholder="Ej. 999 999 999" required />
+                    </label>
+                    <label>
+                      Correo opcional
+                      <input name="email" type="email" placeholder="correo@dominio.com" defaultValue={googleSession?.email ?? ""} />
+                    </label>
+                    <label>
+                      Codigo de quien te invito (opcional)
+                      <input name="referralCode" placeholder="Puedes dejarlo vacio" defaultValue={invitedByCode} />
+                    </label>
+                    <button className="primary-button" type="submit">
+                      Inscribirme
+                    </button>
+                  </form>
                 </div>
-                <p>Completa tus datos y envia tu comprobante. El codigo se activa cuando el pago queda confirmado.</p>
-                <form action={registerParticipant} className="stacked-form">
-                  <label>
-                    Nombre completo
-                    <input name="name" placeholder="Ej. Juan Perez" defaultValue={googleSession?.name ?? ""} required />
-                  </label>
-                  <label>
-                    WhatsApp
-                    <input name="phone" placeholder="Ej. 999 999 999" required />
-                  </label>
-                  <label>
-                    Correo opcional
-                    <input name="email" type="email" placeholder="correo@dominio.com" defaultValue={googleSession?.email ?? ""} />
-                  </label>
-                  <label>
-                    Codigo de quien te invito (opcional)
-                    <input name="referralCode" placeholder="Puedes dejarlo vacio" defaultValue={invitedByCode} />
-                  </label>
-                  <button className="primary-button" type="submit">
-                    Inscribirme
-                  </button>
-                </form>
               </div>
-            </div>
+            ) : null}
           </div>
         </section>
 
