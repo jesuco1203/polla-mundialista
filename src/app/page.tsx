@@ -279,12 +279,9 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const googleLoginHref = invitedByCode
     ? `/api/auth/google?ref=${encodeURIComponent(invitedByCode)}`
     : "/api/auth/google";
-  const primaryHeroHref = "#registro";
-  const primaryHeroLabel = googleParticipant
-    ? "Ver mi invitacion"
-    : googleSession
-      ? "Completar registro"
-      : "Entrar o registrarme";
+  const hasParticipant = Boolean(googleParticipant || registeredParticipant);
+  const primaryHeroHref = hasParticipant ? "#participante" : "#registro";
+  const primaryHeroLabel = hasParticipant ? "Haz tu pronostico" : "Registrar / Entrar";
   const loggedParticipantName = googleParticipant?.name ?? registeredParticipant?.name ?? "";
   const loggedParticipantShortName = shortAccountName(loggedParticipantName);
 
@@ -408,15 +405,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
         </div>
       </section>
 
-      <nav className="view-tabs" aria-label="Vistas principales">
-        <a href="#como-funciona">Como funciona</a>
-        <a href="#registro">Inscripcion</a>
-        {leaderboard.length > 0 ? <a href="#ranking">Ranking</a> : null}
-        <a href="#participante">Pronosticos</a>
-        <a href="#referidos">Referidos</a>
-      </nav>
-
-      <div className="app-shell">
+      <div className={hasParticipant ? "app-shell is-participant" : "app-shell is-guest"}>
         <section className="how-card" id="como-funciona">
           <div className="signup-copy">
             <SectionTitle
@@ -846,6 +835,14 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             </p>
           </article>
         </section>
+
+        <nav className="view-tabs" aria-label="Vistas principales">
+          <a href="#registro">Inscripcion</a>
+          <a href="#participante">Pronosticos</a>
+          {leaderboard.length > 0 ? <a href="#ranking">Ranking</a> : null}
+          <a href="#como-funciona">Como funciona</a>
+          <a href="#referidos">Referidos</a>
+        </nav>
 
       </div>
       {loggedParticipantName ? (

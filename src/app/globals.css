@@ -561,11 +561,43 @@ label {
 }
 
 .app-shell {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 1.25rem;
-  grid-template-columns: minmax(0, 1fr);
   padding-bottom: 3rem;
   padding-top: 1.25rem;
+}
+
+.app-shell.is-guest .conversion-grid {
+  order: 1;
+}
+
+.app-shell.is-guest .dashboard-grid {
+  order: 2;
+}
+
+.app-shell.is-participant .dashboard-grid {
+  order: 1;
+}
+
+.app-shell.is-participant .conversion-grid {
+  order: 2;
+}
+
+.app-shell .how-card {
+  order: 3;
+}
+
+.app-shell .proof-grid {
+  order: 4;
+}
+
+.app-shell .view-tabs {
+  order: 5;
+}
+
+.app-shell.is-participant .participant-layout {
+  order: -1;
 }
 
 .app-shell > .kpi-strip {
