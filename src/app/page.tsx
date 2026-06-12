@@ -688,6 +688,14 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                           </p>
                         </>
                       ) : null}
+                      <div className="prediction-box-title">
+                        <span>Tu pronostico</span>
+                        {googleParticipant || registeredParticipant ? (
+                          <small>Queda guardado a tu nombre.</small>
+                        ) : (
+                          <small>Si no has entrado, te pediremos crear cuenta al guardar.</small>
+                        )}
+                      </div>
                       <div className="score-inputs compact">
                         <label>
                           Local
