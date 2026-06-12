@@ -422,6 +422,12 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 <ReferralShare baseUrl={baseUrl} code={googleParticipant.referralCode} />
               </>
             ) : null}
+            {googleSession && !googleParticipant && !registeredParticipant ? (
+              <div className="registration-alert">
+                Ya entraste con Google. Completa tu WhatsApp y presiona Registrarme para generar tu codigo y link de
+                invitacion.
+              </div>
+            ) : null}
 
             {referralError === "invalid" ? (
               <div className="registration-alert">
