@@ -191,7 +191,7 @@ export async function savePrediction(formData: FormData) {
       : null;
 
   if (!participant) {
-    throw new Error("No encontramos tu inscripcion. Entra con Google o usa tu codigo.");
+    redirect("/?predictionNotice=login#participante");
   }
 
   if (participant.paymentStatus !== "PAID") {

@@ -37,6 +37,7 @@ type HomeSearchParams = Promise<{
   registered?: string | string[];
   referralError?: string | string[];
   authError?: string | string[];
+  predictionNotice?: string | string[];
 }>;
 
 function firstSearchParam(value: string | string[] | undefined) {
@@ -195,6 +196,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const registeredCode = normalizeCodeParam(query.registered);
   const referralError = firstSearchParam(query.referralError);
   const authError = firstSearchParam(query.authError);
+  const predictionNotice = firstSearchParam(query.predictionNotice);
   const baseUrl = await getBaseUrl();
   const googleSession = await getGoogleSession();
   const { config, participants, matches, leaderboard } = await getDashboardData();
@@ -627,6 +629,25 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
               }
             />
 
+            {predictionNotice === "login" && !googleParticipant ? (
+              <div className="prediction-login-alert">
+                <div>
+                  <strong>Para guardar tu pronostico necesitas entrar o crear tu cuenta.</strong>
+                  <span>Asi vinculamos tus puntos, tu pago y tus referidos con tu participante.</span>
+                </div>
+                <div className="auth-actions">
+                  <a className="primary-button" href={googleSession ? "#registro" : "/api/auth/google"}>
+                    {googleSession ? "Completar registro" : "Entrar con Google"}
+                  </a>
+                  {googleSession ? null : (
+                    <a className="secondary-button" href="#registro">
+                      Crear mi cuenta
+                    </a>
+                  )}
+                </div>
+              </div>
+            ) : null}
+
             <div className="match-grid">
               {displayMatches.length === 0 ? (
                 <p className="empty-text">No hay partidos pendientes cargados.</p>
@@ -664,15 +685,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                           <input name="accessCode" type="hidden" value="" />
                           <p className="helper-text">Pronosticas como {googleParticipant.name}.</p>
                         </>
-                      ) : (
-                        <label>
-                          Codigo para jugar
-                          <input name="accessCode" placeholder="Ej. TU1234" required disabled={locked} />
-                          <span className="field-help">
-                            Si no entraste con Google, usa el codigo que recibiste al inscribirte.
-                          </span>
-                        </label>
-                      )}
+                      ) : null}
                       <div className="score-inputs compact">
                         <label>
                           Local
