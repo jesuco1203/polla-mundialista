@@ -253,10 +253,29 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             <a href="#participante">Pronosticos</a>
             <a href="#referidos">Referidos</a>
           </nav>
-          <a href={primaryHeroHref} className="header-cta">
-            Entrar
-            <ChevronRight size={16} />
-          </a>
+          {googleSession ? (
+            <details className="user-menu">
+              <summary>
+                <span className="user-avatar">{googleSession.name.slice(0, 1).toUpperCase()}</span>
+                <span>Hola, {googleSession.name.split(" ")[0]}</span>
+                <ChevronRight size={16} />
+              </summary>
+              <div>
+                <a href={googleParticipant ? "#registro" : "#participante"}>Mi perfil</a>
+                <form action="/api/auth/logout" method="post">
+                  <button type="submit">
+                    <LogOut size={16} />
+                    Cerrar sesion
+                  </button>
+                </form>
+              </div>
+            </details>
+          ) : (
+            <a href={primaryHeroHref} className="header-cta">
+              Entrar
+              <ChevronRight size={16} />
+            </a>
+          )}
         </header>
 
         <div className="hero-grid">
@@ -547,78 +566,61 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
           </div>
         </section>
 
-        <section className="ranking-section" id="ranking">
-          <SectionTitle
-            eyebrow="Competencia"
-            title="Ranking general"
-            description="Gana quien acumule mas puntos por pronosticos y bonus de referidos."
-          />
-          <div className="leaderboard-panel">
-            {leaderboard.length === 0 ? (
-              <div className="soft-empty-state">
-                <strong>El ranking aparecera cuando se confirmen los primeros pagos.</strong>
-                <span>
-                  Los participantes suman 2 puntos por marcador exacto, 1 por resultado correcto y bonus por referidos.
-                </span>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>#</th>
-                      <th>Participante</th>
-                      <th>Codigo referido</th>
-                      <th>Exactos</th>
-                      <th>Pronosticos</th>
-                      <th>Referidos</th>
-                      <th>Bonus</th>
-                      <th>Puntos</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {leaderboard.map((participant, index) => (
-                      <tr key={participant.id}>
-                        <td>{index + 1}</td>
-                        <td className="font-medium text-[var(--foreground)]">{participant.name}</td>
-                        <td>{participant.referralCode}</td>
-                        <td>{participant.exactHits}</td>
-                        <td>{participant.predictedMatches}</td>
-                        <td>{participant.paidReferralCount}/{REFERRAL_INVITE_LIMIT}</td>
-                        <td>+{participant.totalBonusPoints}</td>
-                        <td className="score-cell">{participant.totalPoints}</td>
+        <section className="dashboard-grid" id="dashboard">
+          <div className="ranking-section" id="ranking">
+            <SectionTitle
+              eyebrow="Competencia"
+              title="Ranking general"
+              description="Gana quien acumule mas puntos por pronosticos y bonus de referidos."
+            />
+            <div className="leaderboard-panel">
+              {leaderboard.length === 0 ? (
+                <div className="soft-empty-state">
+                  <strong>El ranking aparecera cuando se confirmen los primeros pagos.</strong>
+                  <span>
+                    Los participantes suman 2 puntos por marcador exacto, 1 por resultado correcto y bonus por referidos.
+                  </span>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Participante</th>
+                        <th>Exactos</th>
+                        <th>Pronosticos</th>
+                        <th>Referidos</th>
+                        <th>Bonus</th>
+                        <th>Puntos</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    </thead>
+                    <tbody>
+                      {leaderboard.map((participant, index) => (
+                        <tr key={participant.id}>
+                          <td>{index + 1}</td>
+                          <td>
+                            <span className="participant-name-cell">
+                              <TeamMark name={participant.name} />
+                              <span>{participant.name}</span>
+                            </span>
+                          </td>
+                          <td>{participant.exactHits}</td>
+                          <td>{participant.predictedMatches}</td>
+                          <td>{participant.paidReferralCount}/{REFERRAL_INVITE_LIMIT}</td>
+                          <td>+{participant.totalBonusPoints}</td>
+                          <td className="score-cell">{participant.totalPoints}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
           </div>
-        </section>
 
-        <section className="proof-grid" aria-label="Reglas y confianza">
-          <article className="proof-card">
-            <div className="proof-icon"><ShieldCheck size={20} /></div>
-            <h2>Reglas claras</h2>
-            <p>Marcador exacto suma 2 puntos. Resultado correcto suma 1 punto. Cada partido se bloquea al iniciar.</p>
-          </article>
-          <article className="proof-card">
-            <div className="proof-icon"><CircleDollarSign size={20} /></div>
-            <h2>Pago confirmado</h2>
-            <p>Tu acceso queda pendiente hasta que el organizador marque tu inscripcion como pagada.</p>
-          </article>
-          <article className="proof-card" id="referidos">
-            <div className="proof-icon"><Share2 size={20} /></div>
-            <h2>Referidos con puntos</h2>
-            <p>
-              Trae hasta {REFERRAL_INVITE_LIMIT} amigos pagados: tu sumas +{REFERRER_BONUS_POINTS} por cada uno y
-              ellos reciben +{REFERRED_WELCOME_POINTS} de bienvenida.
-            </p>
-          </article>
-        </section>
-
-        <section className="participant-layout" id="participante">
-          <div className="participant-main">
+          <div className="participant-layout" id="participante">
+            <div className="participant-main">
             <SectionTitle
               eyebrow="Pronosticos"
               title={todayMatches.length > 0 ? "Partidos de hoy" : "Proximos partidos"}
@@ -705,6 +707,28 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
               )}
             </div>
           </div>
+          </div>
+        </section>
+
+        <section className="proof-grid" aria-label="Reglas y confianza">
+          <article className="proof-card">
+            <div className="proof-icon"><ShieldCheck size={20} /></div>
+            <h2>Reglas claras</h2>
+            <p>Marcador exacto suma 2 puntos. Resultado correcto suma 1 punto. Cada partido se bloquea al iniciar.</p>
+          </article>
+          <article className="proof-card">
+            <div className="proof-icon"><CircleDollarSign size={20} /></div>
+            <h2>Pago confirmado</h2>
+            <p>Tu acceso queda pendiente hasta que el organizador marque tu inscripcion como pagada.</p>
+          </article>
+          <article className="proof-card" id="referidos">
+            <div className="proof-icon"><Share2 size={20} /></div>
+            <h2>Referidos con puntos</h2>
+            <p>
+              Trae hasta {REFERRAL_INVITE_LIMIT} amigos pagados: tu sumas +{REFERRER_BONUS_POINTS} por cada uno y
+              ellos reciben +{REFERRED_WELCOME_POINTS} de bienvenida.
+            </p>
+          </article>
         </section>
 
       </div>
