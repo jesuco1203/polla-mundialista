@@ -197,6 +197,14 @@ function matchDateParts(startsAt: Date) {
   };
 }
 
+function shortAccountName(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .join(" ");
+}
+
 function MatchState({ locked }: { locked: boolean }) {
   return (
     <span className={locked ? "match-state closed" : "match-state open"}>
@@ -277,6 +285,8 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
     : googleSession
       ? "Completar registro"
       : "Entrar o registrarme";
+  const loggedParticipantName = googleParticipant?.name ?? registeredParticipant?.name ?? "";
+  const loggedParticipantShortName = shortAccountName(loggedParticipantName);
 
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -838,6 +848,23 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
         </section>
 
       </div>
+      {loggedParticipantName ? (
+        <nav className="mobile-user-bar" aria-label="Acciones rapidas del participante">
+          <div className="mobile-user-info">
+            <strong>{loggedParticipantShortName}</strong>
+          </div>
+          <div className="mobile-user-actions">
+            <a href="#participante">
+              <CalendarDays size={17} />
+              Pronostico
+            </a>
+            <a href="#ranking">
+              <Trophy size={17} />
+              Ranking
+            </a>
+          </div>
+        </nav>
+      ) : null}
     </main>
   );
 }

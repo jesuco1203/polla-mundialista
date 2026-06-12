@@ -1457,6 +1457,10 @@ label {
   display: none;
 }
 
+.mobile-user-bar {
+  display: none;
+}
+
 .prediction-box-title {
   display: grid;
   gap: 0.18rem;
@@ -2019,6 +2023,10 @@ label {
 }
 
 @media (max-width: 759px) {
+  .app-shell {
+    padding-bottom: 9rem;
+  }
+
   .participant-layout {
     order: -1;
   }
@@ -2029,6 +2037,66 @@ label {
 
   .proof-grid {
     display: none;
+  }
+
+  .mobile-user-bar {
+    position: fixed;
+    right: 0.75rem;
+    bottom: max(0.75rem, env(safe-area-inset-bottom));
+    left: 0.75rem;
+    z-index: 60;
+    align-items: center;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.62rem;
+    border: 1px solid rgba(8, 88, 54, 0.24);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 16px 40px rgba(16, 36, 24, 0.18);
+    padding: 0.72rem;
+    backdrop-filter: blur(16px);
+  }
+
+  .mobile-user-info {
+    align-items: center;
+    display: flex;
+    min-width: 0;
+  }
+
+  .mobile-user-info strong {
+    overflow: hidden;
+    color: var(--foreground);
+    font-size: 1.05rem;
+    font-weight: 900;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-user-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
+  }
+
+  .mobile-user-actions a {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 44px;
+    border-radius: 10px;
+    padding: 0 0.62rem;
+    color: #ffffff;
+    background: var(--accent);
+    font-size: 0.78rem;
+    font-weight: 900;
+    text-decoration: none;
+  }
+
+  .mobile-user-actions a + a {
+    border: 1px solid var(--border-strong);
+    background: #ffffff;
+    color: var(--accent-strong);
   }
 }
 
