@@ -1807,6 +1807,48 @@ label {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .entry-options {
+    align-items: stretch;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+
+  .entry-choice-intro {
+    grid-column: 1 / -1;
+  }
+
+  .entry-google-card,
+  .entry-whatsapp-card {
+    min-height: 100%;
+  }
+
+  .entry-card + .entry-card {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .entry-divider {
+    align-self: stretch;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 1fr auto 1fr;
+    gap: 0.65rem;
+    min-width: 34px;
+  }
+
+  .entry-divider::before,
+  .entry-divider::after {
+    justify-self: center;
+    width: 1px;
+    height: 100%;
+  }
+
+  .entry-whatsapp-card .stacked-form {
+    gap: 0.65rem;
+  }
+
+  .entry-whatsapp-card .primary-button {
+    margin-top: 0.1rem;
+  }
+
   .signup-stats {
     grid-template-columns: minmax(0, 1fr);
   }

@@ -517,7 +517,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   <strong>Elige una sola forma de entrar</strong>
                   <span>Puedes usar Google o crear tu cuenta con nombre y WhatsApp. No necesitas hacer ambas.</span>
                 </div>
-                <div className="entry-card existing-user">
+                <div className="entry-card existing-user entry-google-card">
                   <div>
                     <Lock size={18} />
                     <h2>Opcion 1: Entrar con Google</h2>
@@ -537,7 +537,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   <span>O</span>
                 </div>
 
-                <div className="entry-card">
+                <div className="entry-card entry-whatsapp-card">
                   <div>
                     <UserPlus size={18} />
                     <h2>Opcion 2: Crear cuenta con WhatsApp</h2>
