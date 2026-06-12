@@ -1260,6 +1260,29 @@ label {
   gap: 0.6rem;
 }
 
+.team-score-field {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  padding: 0.6rem;
+}
+
+.score-team-name {
+  min-height: 2.3em;
+  color: var(--foreground);
+  font-size: 0.82rem;
+  font-weight: 850;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.team-score-field input {
+  margin-top: 0.45rem;
+  border-color: var(--border-strong);
+  background: #ffffff;
+}
+
 .score-inputs.compact input {
   text-align: center;
   font-size: 1rem;
@@ -2064,6 +2087,15 @@ label {
 
   .score-inputs.compact {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .team-score-field {
+    padding: 0.55rem;
+  }
+
+  .score-team-name {
+    min-height: 2.55em;
+    font-size: 0.76rem;
   }
 
   .score-inputs.compact input {

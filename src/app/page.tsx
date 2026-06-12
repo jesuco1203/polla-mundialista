@@ -697,12 +697,12 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                         )}
                       </div>
                       <div className="score-inputs compact">
-                        <label>
-                          Local
+                        <label className="team-score-field">
+                          <span className="score-team-name">{match.homeTeam}</span>
                           <input name="homeScore" type="number" min="0" max="30" defaultValue="1" required disabled={locked} />
                         </label>
-                        <label>
-                          Visitante
+                        <label className="team-score-field">
+                          <span className="score-team-name">{match.awayTeam}</span>
                           <input name="awayScore" type="number" min="0" max="30" defaultValue="0" required disabled={locked} />
                         </label>
                       </div>
