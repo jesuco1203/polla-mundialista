@@ -15,7 +15,6 @@ import {
   Users,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
 import { headers } from "next/headers";
 import {
   registerParticipant,
@@ -231,6 +230,12 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const displayMatches = todayMatches.length > 0 ? todayMatches : nextMatches;
   const openMatches = nextMatches.filter((match) => match.startsAt > now);
   const nextClose = openMatches[0]?.startsAt;
+  const primaryHeroHref = googleSession ? "#registro" : "/api/auth/google";
+  const primaryHeroLabel = googleParticipant
+    ? "Ver mi invitacion"
+    : googleSession
+      ? "Completar registro"
+      : "Entrar con Google";
   const shouldOpenRegisterPanel = Boolean(
     invitedByCode || referralError || authError || registeredParticipant || googleSession,
   );
@@ -244,18 +249,18 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
               <Trophy size={16} />
               Mundial 2026
             </div>
-            <h1>Participa en la Polla Mundialista 2026</h1>
+            <h1>Participa en la Polla del Mundial 2026</h1>
             <p>
-              Inscribete por S/10, pronostica cada partido y compite por el pozo
-              con ranking automatico. Invita hasta {REFERRAL_INVITE_LIMIT} amigos y suma puntos extra.
+              Inscribete por S/10, pronostica cada partido y compite por el pozo acumulado. Tu acceso se activa cuando
+              confirmamos tu pago.
             </p>
             <div className="hero-actions">
-              <a href="#registro" className="primary-link">
-                Inscribirme
+              <a href={primaryHeroHref} className="primary-link">
+                {primaryHeroLabel}
                 <ChevronRight size={18} />
               </a>
-              <a href="#ranking" className="ghost-link">
-                Ver ranking
+              <a href="#como-funciona" className="ghost-link">
+                Como funciona
               </a>
             </div>
             <div className="auth-strip">
@@ -270,10 +275,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   </form>
                 </>
               ) : (
-                <a className="google-button" href="/api/auth/google">
-                  <LogIn size={16} />
-                  Entrar con Google
-                </a>
+                <span>Registro rapido con Google o WhatsApp.</span>
               )}
             </div>
           </div>
@@ -331,10 +333,9 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
 
       <nav className="view-tabs" aria-label="Vistas principales">
         <a href="#registro">Inscripcion</a>
-        <a href="#ranking">Ranking</a>
+        {leaderboard.length > 0 ? <a href="#ranking">Ranking</a> : null}
         <a href="#participante">Pronosticos</a>
         <a href="#referidos">Referidos</a>
-        <Link href="/admin">Admin</Link>
       </nav>
 
       <div className="app-shell">
@@ -343,7 +344,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             <SectionTitle
               eyebrow="Inscripcion"
               title="Entra a la polla en menos de un minuto"
-              description="Registrate, confirma tu pago con el organizador y recibe tus codigos para pronosticar e invitar."
+              description="Registrate, confirma tu pago y activa tus pronosticos. Tu codigo de referido queda listo para compartir."
             />
 
             <figure className="mascot-card">
@@ -363,18 +364,18 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
               </figcaption>
             </figure>
 
-            <div className="flow-steps" aria-label="Como funciona">
+            <div className="flow-steps" id="como-funciona" aria-label="Como funciona">
               <div>
                 <strong>1</strong>
-                <span>Te registras con WhatsApp.</span>
+                <span>Registrate con Google o WhatsApp.</span>
               </div>
               <div>
                 <strong>2</strong>
-                <span>Pagas S/10 y se confirma tu acceso.</span>
+                <span>Confirma tu pago de S/10.</span>
               </div>
               <div>
                 <strong>3</strong>
-                <span>Pronosticas, compites y compartes tu referido para sumar bonus.</span>
+                <span>Pronostica y comparte tu referido.</span>
               </div>
             </div>
 
@@ -522,11 +523,19 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
         </section>
 
         <section className="kpi-strip" aria-label="Resumen de la polla">
+          {paidParticipants.length > 0 ? (
+            <StatCard
+              icon={<Users size={20} />}
+              label="Inscritos pagados"
+              value={`${paidParticipants.length}`}
+              detail={`${participants.length} registros totales`}
+            />
+          ) : null}
           <StatCard
-            icon={<Users size={20} />}
-            label="Inscritos pagados"
-            value={`${paidParticipants.length}`}
-            detail={`${participants.length} registros totales`}
+            icon={<CircleDollarSign size={20} />}
+            label="Inscripcion"
+            value={formatMoney(config.entryFeeCents, config.currency)}
+            detail="Pago unico para activar tu acceso"
           />
           <StatCard
             icon={<CircleDollarSign size={20} />}
@@ -540,20 +549,22 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             value={formatMoney(winnerCents, config.currency)}
             detail={`${config.winnerShare}% del pozo`}
           />
-          <StatCard
-            icon={<CalendarClock size={20} />}
-            label="Cierre proximo"
-            value={
-              nextClose ? formatPeruShortDateTime(nextClose) : "Sin partidos"
-            }
-            detail="Pronostico bloqueado al iniciar"
-          />
-          <StatCard
-            icon={<Share2 size={20} />}
-            label="Referidos pagados"
-            value={`${paidReferrals}`}
-            detail={`+${REFERRER_BONUS_POINTS} pts por amigo, max ${REFERRAL_INVITE_LIMIT}`}
-          />
+          {nextClose ? (
+            <StatCard
+              icon={<CalendarClock size={20} />}
+              label="Cierre proximo"
+              value={formatPeruShortDateTime(nextClose)}
+              detail="Pronostico bloqueado al iniciar"
+            />
+          ) : null}
+          {paidReferrals > 0 ? (
+            <StatCard
+              icon={<Share2 size={20} />}
+              label="Referidos pagados"
+              value={`${paidReferrals}`}
+              detail={`+${REFERRER_BONUS_POINTS} pts por amigo, max ${REFERRAL_INVITE_LIMIT}`}
+            />
+          ) : null}
         </section>
 
         <section className="ranking-section" id="ranking">
@@ -563,29 +574,30 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             description="Gana quien acumule mas puntos por pronosticos y bonus de referidos."
           />
           <div className="leaderboard-panel">
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>#</th>
-                    <th>Participante</th>
-                    <th>Codigo referido</th>
-                    <th>Exactos</th>
-                    <th>Pronosticos</th>
-                    <th>Referidos</th>
-                    <th>Bonus</th>
-                    <th>Puntos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaderboard.length === 0 ? (
+            {leaderboard.length === 0 ? (
+              <div className="soft-empty-state">
+                <strong>El ranking aparecera cuando se confirmen los primeros pagos.</strong>
+                <span>
+                  Los participantes suman 2 puntos por marcador exacto, 1 por resultado correcto y bonus por referidos.
+                </span>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="data-table">
+                  <thead>
                     <tr>
-                      <td colSpan={8} className="empty-cell">
-                        Aun no hay participantes pagados.
-                      </td>
+                      <th>#</th>
+                      <th>Participante</th>
+                      <th>Codigo referido</th>
+                      <th>Exactos</th>
+                      <th>Pronosticos</th>
+                      <th>Referidos</th>
+                      <th>Bonus</th>
+                      <th>Puntos</th>
                     </tr>
-                  ) : (
-                    leaderboard.map((participant, index) => (
+                  </thead>
+                  <tbody>
+                    {leaderboard.map((participant, index) => (
                       <tr key={participant.id}>
                         <td>{index + 1}</td>
                         <td className="font-medium text-[var(--foreground)]">{participant.name}</td>
@@ -596,11 +608,11 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                         <td>+{participant.totalBonusPoints}</td>
                         <td className="score-cell">{participant.totalPoints}</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </section>
 

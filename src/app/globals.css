@@ -1198,6 +1198,25 @@ label {
   text-align: center;
 }
 
+.soft-empty-state {
+  background: var(--surface-raised);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+}
+
+.soft-empty-state strong {
+  color: var(--foreground);
+  font-size: 1rem;
+}
+
+.soft-empty-state span {
+  color: var(--muted-foreground);
+  line-height: 1.45;
+}
+
 .admin-zone {
   border-top: 1px solid var(--border);
   padding-top: 1.5rem;
