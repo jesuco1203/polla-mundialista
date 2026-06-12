@@ -16,6 +16,7 @@ import { logEvent } from "@/lib/audit-log";
 import { fetchWorldCupMatches } from "@/lib/football-api";
 import { getGoogleSession } from "@/lib/google-auth";
 import { parsePeruDateTimeInput } from "@/lib/date-format";
+import { REFERRAL_INVITE_LIMIT } from "@/lib/referral-bonus";
 import { makeAccessCode, scorePrediction } from "@/lib/scoring";
 
 const participantSchema = z.object({
@@ -100,7 +101,12 @@ export async function registerParticipant(formData: FormData) {
   const referrer = normalizedReferralCode
     ? await prisma.participant.findUnique({
         where: { referralCode: normalizedReferralCode },
-        select: { id: true },
+        select: {
+          id: true,
+          _count: {
+            select: { referrals: true },
+          },
+        },
       })
     : null;
 
@@ -116,6 +122,22 @@ export async function registerParticipant(formData: FormData) {
       targetType: "Participant",
     });
     redirect(`/?ref=${encodeURIComponent(normalizedReferralCode)}&referralError=invalid#registro`);
+  }
+
+  if (referrer && referrer._count.referrals >= REFERRAL_INVITE_LIMIT) {
+    await logEvent({
+      actor: parsed.phone,
+      event: "referral.limit_reached",
+      payload: {
+        attemptedReferralCode: normalizedReferralCode,
+        limit: REFERRAL_INVITE_LIMIT,
+        name: parsed.name,
+        phone: parsed.phone,
+      },
+      targetId: referrer.id,
+      targetType: "Participant",
+    });
+    redirect(`/?ref=${encodeURIComponent(normalizedReferralCode)}&referralError=limit#registro`);
   }
 
   const participant = await prisma.participant.create({

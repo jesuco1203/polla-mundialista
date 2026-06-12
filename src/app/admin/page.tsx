@@ -23,6 +23,7 @@ import { ReferralShare } from "@/app/referral-share";
 import { getAdminSession } from "@/lib/admin-auth";
 import { formatPeruShortDateTime } from "@/lib/date-format";
 import { prisma } from "@/lib/prisma";
+import { REFERRAL_INVITE_LIMIT, REFERRER_BONUS_POINTS } from "@/lib/referral-bonus";
 import { formatMoney } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
@@ -150,6 +151,11 @@ export default async function AdminPage({ searchParams }: { searchParams?: Admin
       referralCode: participant.referralCode,
       totalReferrals: participant.referrals.length,
       paidReferrals: participant.referrals.filter((referral) => referral.paymentStatus === "PAID").length,
+      referralBonusPoints:
+        Math.min(
+          participant.referrals.filter((referral) => referral.paymentStatus === "PAID").length,
+          REFERRAL_INVITE_LIMIT,
+        ) * REFERRER_BONUS_POINTS,
     }))
     .filter((participant) => participant.totalReferrals > 0)
     .sort((a, b) => b.paidReferrals - a.paidReferrals || b.totalReferrals - a.totalReferrals);
@@ -233,7 +239,8 @@ export default async function AdminPage({ searchParams }: { searchParams?: Admin
                       {participant.referredBy ? <span>Invitado por {participant.referredBy.name}</span> : null}
                       <span>
                         {participant.referrals.length} referidos ·{" "}
-                        {participant.referrals.filter((referral) => referral.paymentStatus === "PAID").length} pagados
+                        {participant.referrals.filter((referral) => referral.paymentStatus === "PAID").length} pagados · cupos{" "}
+                        {participant.referrals.length}/{REFERRAL_INVITE_LIMIT}
                       </span>
                       <StatusPill status={participant.paymentStatus} />
                     </div>
@@ -273,7 +280,8 @@ export default async function AdminPage({ searchParams }: { searchParams?: Admin
                     </div>
                     <div>
                       <strong>{participant.paidReferrals}</strong>
-                      <span>{participant.totalReferrals} total</span>
+                      <span>{participant.totalReferrals}/{REFERRAL_INVITE_LIMIT} total</span>
+                      <span>+{participant.referralBonusPoints} pts</span>
                     </div>
                   </div>
                 ))

@@ -2,6 +2,7 @@
 
 import { Check, Copy, MessageCircle, Share2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { REFERRED_WELCOME_POINTS } from "@/lib/referral-bonus";
 
 type ReferralShareProps = {
   baseUrl: string;
@@ -32,7 +33,7 @@ export function ReferralShare({ baseUrl, code, name, compact = false }: Referral
   const inviteLink = `${baseUrl}/?ref=${encodeURIComponent(code)}#registro`;
   const inviteText = useMemo(
     () =>
-      `Entra a la Polla Mundialista 2026 con mi codigo ${code}. Inscribete por S/10, pronostica y compite por el pozo: ${inviteLink}`,
+      `Entra a la Polla Mundialista 2026 con mi codigo ${code} y recibe +${REFERRED_WELCOME_POINTS} punto de bienvenida. Inscribete por S/10, pronostica y compite por el pozo: ${inviteLink}`,
     [code, inviteLink],
   );
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(inviteText)}`;
@@ -97,8 +98,8 @@ export function ReferralShare({ baseUrl, code, name, compact = false }: Referral
       </div>
       {!compact ? (
         <p>
-          Tambien puedes pegar este link en Instagram, Facebook, TikTok o cualquier grupo. El codigo queda aplicado al
-          abrir el registro.
+          Tambien puedes pegar este link en Instagram, Facebook, TikTok o cualquier grupo. Tu invitado recibe el bonus
+          de bienvenida al registrarse con tu codigo.
         </p>
       ) : null}
     </div>

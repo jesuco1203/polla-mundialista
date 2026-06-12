@@ -8,6 +8,8 @@ Sistema web para administrar una polla mundialista privada: inscripciones, pagos
 - Marcador exacto: 2 puntos.
 - Resultado correcto: 1 punto.
 - Error: 0 puntos.
+- Referido pagado: +3 puntos para quien invito, maximo 3 referidos por usuario.
+- Bienvenida por referido: +1 punto para quien entra con un codigo valido.
 - Premio ganador: 50% del pozo acumulado.
 - Organizador: 50% del pozo acumulado.
 

@@ -25,6 +25,12 @@ import { ReferralShare } from "@/app/referral-share";
 import { formatPeruDateTime, formatPeruShortDateTime, peruDayKey } from "@/lib/date-format";
 import { getGoogleSession } from "@/lib/google-auth";
 import { prisma } from "@/lib/prisma";
+import {
+  REFERRAL_INVITE_LIMIT,
+  REFERRER_BONUS_POINTS,
+  REFERRED_WELCOME_POINTS,
+  getReferralBonus,
+} from "@/lib/referral-bonus";
 import { formatMoney } from "@/lib/scoring";
 
 export const dynamic = "force-dynamic";
@@ -74,20 +80,35 @@ async function getDashboardData() {
     }),
     prisma.participant.findMany({
       where: { paymentStatus: "PAID" },
-      include: { predictions: true },
+      include: {
+        predictions: true,
+        referrals: {
+          select: { paymentStatus: true },
+        },
+      },
     }),
   ]);
 
   const sortedLeaderboard = leaderboard
-    .map((participant) => ({
-      ...participant,
-      totalPoints: participant.predictions.reduce(
+    .map((participant) => {
+      const predictionPoints = participant.predictions.reduce(
         (total, prediction) => total + prediction.points,
         0,
-      ),
-      predictedMatches: participant.predictions.length,
-      exactHits: participant.predictions.filter((prediction) => prediction.points === 2).length,
-    }))
+      );
+      const referralBonus = getReferralBonus({
+        referredById: participant.referredById,
+        referrals: participant.referrals,
+      });
+
+      return {
+        ...participant,
+        ...referralBonus,
+        exactHits: participant.predictions.filter((prediction) => prediction.points === 2).length,
+        predictedMatches: participant.predictions.length,
+        predictionPoints,
+        totalPoints: predictionPoints + referralBonus.totalBonusPoints,
+      };
+    })
     .sort(
       (a, b) =>
         b.totalPoints - a.totalPoints ||
@@ -199,16 +220,6 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
       total + participant.referrals.filter((referral) => referral.paymentStatus === "PAID").length,
     0,
   );
-  const referralLeaders = participants
-    .map((participant) => ({
-      id: participant.id,
-      name: participant.name,
-      referralCode: participant.referralCode,
-      totalReferrals: participant.referrals.length,
-      paidReferrals: participant.referrals.filter((referral) => referral.paymentStatus === "PAID").length,
-    }))
-    .filter((participant) => participant.totalReferrals > 0)
-    .sort((a, b) => b.paidReferrals - a.paidReferrals || b.totalReferrals - a.totalReferrals);
   const googleParticipant = googleSession?.email
     ? participants.find((participant) => participant.email?.toLowerCase() === googleSession.email.toLowerCase()) ?? null
     : null;
@@ -234,7 +245,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             <h1>Participa en la Polla Mundialista 2026</h1>
             <p>
               Inscribete por S/10, pronostica cada partido y compite por el pozo
-              con ranking automatico.
+              con ranking automatico. Invita hasta {REFERRAL_INVITE_LIMIT} amigos y suma puntos extra.
             </p>
             <div className="hero-actions">
               <a href="#registro" className="primary-link">
@@ -308,7 +319,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 <div>
                   <Share2 size={16} />
                   <dt>Referidos</dt>
-                  <dd>{paidReferrals} pagados</dd>
+                  <dd>+{REFERRER_BONUS_POINTS} pts por amigo</dd>
                 </div>
               </dl>
             </div>
@@ -343,7 +354,10 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
               />
               <figcaption>
                 <strong>Tu codigo te abre la cancha.</strong>
-                <span>Inscribete, invita con tu referido y empieza a competir.</span>
+                <span>
+                  Invita hasta {REFERRAL_INVITE_LIMIT} amigos: tu sumas +{REFERRER_BONUS_POINTS} y ellos reciben{" "}
+                  +{REFERRED_WELCOME_POINTS} de bienvenida.
+                </span>
               </figcaption>
             </figure>
 
@@ -358,7 +372,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
               </div>
               <div>
                 <strong>3</strong>
-                <span>Pronosticas, compites y compartes tu referido.</span>
+                <span>Pronosticas, compites y compartes tu referido para sumar bonus.</span>
               </div>
             </div>
 
@@ -372,7 +386,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             <summary>
               <span>Entrar</span>
               <span>Registrarme</span>
-              <small>S/10 · ranking automatico · referido propio</small>
+              <small>S/10 · ranking automatico · max {REFERRAL_INVITE_LIMIT} referidos</small>
             </summary>
 
             {registeredParticipant ? (
@@ -393,6 +407,11 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             {referralError === "invalid" ? (
               <div className="registration-alert">
                 No encontramos el codigo {invitedByCode}. Revisa el codigo o registrate sin referido.
+              </div>
+            ) : null}
+            {referralError === "limit" ? (
+              <div className="registration-alert">
+                Ese codigo ya alcanzo el limite de {REFERRAL_INVITE_LIMIT} invitados. Puedes registrarte sin referido.
               </div>
             ) : null}
             {authError ? (
@@ -490,7 +509,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             icon={<Share2 size={20} />}
             label="Referidos pagados"
             value={`${paidReferrals}`}
-            detail={`${referralLeaders.length} participantes invitaron`}
+            detail={`+${REFERRER_BONUS_POINTS} pts por amigo, max ${REFERRAL_INVITE_LIMIT}`}
           />
         </section>
 
@@ -498,7 +517,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
           <SectionTitle
             eyebrow="Competencia"
             title="Ranking general"
-            description="Gana quien acumule mas puntos al terminar el Mundial."
+            description="Gana quien acumule mas puntos por pronosticos y bonus de referidos."
           />
           <div className="leaderboard-panel">
             <div className="overflow-x-auto">
@@ -511,13 +530,14 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                     <th>Exactos</th>
                     <th>Pronosticos</th>
                     <th>Referidos</th>
+                    <th>Bonus</th>
                     <th>Puntos</th>
                   </tr>
                 </thead>
                 <tbody>
                   {leaderboard.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="empty-cell">
+                      <td colSpan={8} className="empty-cell">
                         Aun no hay participantes pagados.
                       </td>
                     </tr>
@@ -529,11 +549,8 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                         <td>{participant.referralCode}</td>
                         <td>{participant.exactHits}</td>
                         <td>{participant.predictedMatches}</td>
-                        <td>
-                          {participants.find((item) => item.id === participant.id)?.referrals.filter(
-                            (referral) => referral.paymentStatus === "PAID",
-                          ).length ?? 0}
-                        </td>
+                        <td>{participant.paidReferralCount}/{REFERRAL_INVITE_LIMIT}</td>
+                        <td>+{participant.totalBonusPoints}</td>
                         <td className="score-cell">{participant.totalPoints}</td>
                       </tr>
                     ))
@@ -557,8 +574,11 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
           </article>
           <article className="proof-card" id="referidos">
             <div className="proof-icon"><Share2 size={20} /></div>
-            <h2>Invita con tu codigo</h2>
-            <p>Cada participante recibe un codigo de referido. En el panel se ve quien invito y cuantos ya pagaron.</p>
+            <h2>Referidos con puntos</h2>
+            <p>
+              Trae hasta {REFERRAL_INVITE_LIMIT} amigos pagados: tu sumas +{REFERRER_BONUS_POINTS} por cada uno y
+              ellos reciben +{REFERRED_WELCOME_POINTS} de bienvenida.
+            </p>
           </article>
         </section>
 
