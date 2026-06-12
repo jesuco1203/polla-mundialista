@@ -12,6 +12,7 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import {
   createMatch,
+  deleteParticipant,
   loginAdmin,
   logoutAdmin,
   markPayment,
@@ -19,6 +20,7 @@ import {
   testGoogleLogging,
   updateMatchResult,
 } from "@/app/actions";
+import { DeleteParticipantButton } from "@/app/admin/delete-participant-button";
 import { ReferralShare } from "@/app/referral-share";
 import { getAdminSession } from "@/lib/admin-auth";
 import { formatPeruShortDateTime } from "@/lib/date-format";
@@ -230,8 +232,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Admin
                 <p className="empty-text">Aun no hay participantes registrados.</p>
               ) : (
                 participants.map((participant) => (
-                  <form action={markPayment} className="participant-row" key={participant.id}>
-                    <input type="hidden" name="participantId" value={participant.id} />
+                  <div className="participant-row" key={participant.id}>
                     <div>
                       <strong>{participant.name}</strong>
                       <span>{participant.phone} · Acceso {participant.accessCode}</span>
@@ -244,16 +245,25 @@ export default async function AdminPage({ searchParams }: { searchParams?: Admin
                       </span>
                       <StatusPill status={participant.paymentStatus} />
                     </div>
-                    <select name="paymentStatus" defaultValue={participant.paymentStatus}>
-                      <option value="PENDING">Pendiente</option>
-                      <option value="PAID">Pagado</option>
-                      <option value="REJECTED">Observado</option>
-                    </select>
-                    <input name="paymentNote" placeholder="Nota pago" defaultValue={participant.paymentNote ?? ""} />
-                    <button className="secondary-button" type="submit">
-                      Actualizar
-                    </button>
-                  </form>
+                    <div className="participant-admin-actions">
+                      <form action={markPayment} className="participant-payment-form">
+                        <input type="hidden" name="participantId" value={participant.id} />
+                        <select name="paymentStatus" defaultValue={participant.paymentStatus}>
+                          <option value="PENDING">Pendiente</option>
+                          <option value="PAID">Pagado</option>
+                          <option value="REJECTED">Observado</option>
+                        </select>
+                        <input name="paymentNote" placeholder="Nota pago" defaultValue={participant.paymentNote ?? ""} />
+                        <button className="secondary-button" type="submit">
+                          Actualizar
+                        </button>
+                      </form>
+                      <form action={deleteParticipant}>
+                        <input type="hidden" name="participantId" value={participant.id} />
+                        <DeleteParticipantButton participantName={participant.name} />
+                      </form>
+                    </div>
+                  </div>
                 ))
               )}
             </div>

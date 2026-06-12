@@ -387,6 +387,55 @@ export async function markPayment(formData: FormData) {
   revalidatePath("/");
 }
 
+export async function deleteParticipant(formData: FormData) {
+  await requireAdminAccess(formData);
+
+  const participantId = String(formData.get("participantId") ?? "");
+  if (!participantId) throw new Error("Participante no encontrado.");
+
+  const participant = await prisma.participant.findUnique({
+    where: { id: participantId },
+    select: {
+      id: true,
+      name: true,
+      phone: true,
+      referralCode: true,
+      _count: {
+        select: {
+          predictions: true,
+          referrals: true,
+        },
+      },
+    },
+  });
+
+  if (!participant) {
+    revalidatePath("/admin");
+    return;
+  }
+
+  await prisma.participant.delete({
+    where: { id: participant.id },
+  });
+
+  await logEvent({
+    actor: "organizer",
+    event: "participant.deleted",
+    payload: {
+      deletedPredictions: participant._count.predictions,
+      deletedReferralsDetached: participant._count.referrals,
+      name: participant.name,
+      phone: participant.phone,
+      referralCode: participant.referralCode,
+    },
+    targetId: participant.id,
+    targetType: "Participant",
+  });
+
+  revalidatePath("/");
+  revalidatePath("/admin");
+}
+
 export async function createMatch(formData: FormData) {
   await requireAdminAccess(formData);
 

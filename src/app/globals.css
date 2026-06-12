@@ -2013,6 +2013,30 @@ label {
   transform: translateY(-1px);
 }
 
+.danger-button {
+  align-items: center;
+  display: inline-flex;
+  min-height: 44px;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(185, 66, 57, 0.32);
+  border-radius: 8px;
+  background: #fff5f4;
+  color: var(--danger);
+  font-weight: 860;
+  padding: 0 0.85rem;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.danger-button:hover {
+  background: var(--danger);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
 .auth-strip,
 .auth-actions {
   align-items: center;
@@ -2340,6 +2364,12 @@ label {
 .participant-row span {
   margin-top: 0.15rem;
   font-size: 0.8rem;
+}
+
+.participant-admin-actions,
+.participant-payment-form {
+  display: grid;
+  gap: 0.6rem;
 }
 
 .status-pill {
