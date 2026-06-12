@@ -662,16 +662,47 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                         <MatchState locked={locked} />
                       </div>
 
+                      <input type="hidden" name="matchId" value={match.id} />
+                      {googleParticipant || registeredParticipant ? (
+                        <input name="accessCode" type="hidden" value={registeredParticipant?.accessCode ?? ""} />
+                      ) : null}
+
                       <div className="teams-row">
-                        <div className="team-side">
-                          <TeamMark name={match.homeTeam} />
-                          <strong>{match.homeTeam}</strong>
-                        </div>
+                        <label className="team-side">
+                          <span className="team-identity">
+                            <TeamMark name={match.homeTeam} />
+                            <strong>{match.homeTeam}</strong>
+                          </span>
+                          <input
+                            aria-label={`Pronostico de ${match.homeTeam}`}
+                            className="inline-score-input"
+                            name="homeScore"
+                            type="number"
+                            min="0"
+                            max="30"
+                            defaultValue="1"
+                            required
+                            disabled={locked}
+                          />
+                        </label>
                         <span className="versus">vs</span>
-                        <div className="team-side right">
-                          <strong>{match.awayTeam}</strong>
-                          <TeamMark name={match.awayTeam} />
-                        </div>
+                        <label className="team-side right">
+                          <span className="team-identity">
+                            <strong>{match.awayTeam}</strong>
+                            <TeamMark name={match.awayTeam} />
+                          </span>
+                          <input
+                            aria-label={`Pronostico de ${match.awayTeam}`}
+                            className="inline-score-input"
+                            name="awayScore"
+                            type="number"
+                            min="0"
+                            max="30"
+                            defaultValue="0"
+                            required
+                            disabled={locked}
+                          />
+                        </label>
                       </div>
 
                       <div className="match-schedule">
@@ -684,34 +715,11 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                             ? "Pronosticos cerrados para este partido."
                             : "Cierra justo al iniciar este partido."}
                         </p>
-                      </div>
-
-                      <input type="hidden" name="matchId" value={match.id} />
-                      {googleParticipant || registeredParticipant ? (
-                        <>
-                          <input name="accessCode" type="hidden" value={registeredParticipant?.accessCode ?? ""} />
+                        {googleParticipant || registeredParticipant ? (
                           <p className="helper-text">
                             Pronosticas como {googleParticipant?.name ?? registeredParticipant?.name}.
                           </p>
-                        </>
-                      ) : null}
-                      <div className="prediction-box-title">
-                        <span>Tu pronostico</span>
-                        {googleParticipant || registeredParticipant ? (
-                          <small>Queda guardado a tu nombre.</small>
-                        ) : (
-                          <small>Si no has entrado, te pediremos crear cuenta al guardar.</small>
-                        )}
-                      </div>
-                      <div className="score-inputs compact">
-                        <label className="team-score-field">
-                          <span className="score-team-name">{match.homeTeam}</span>
-                          <input name="homeScore" type="number" min="0" max="30" defaultValue="1" required disabled={locked} />
-                        </label>
-                        <label className="team-score-field">
-                          <span className="score-team-name">{match.awayTeam}</span>
-                          <input name="awayScore" type="number" min="0" max="30" defaultValue="0" required disabled={locked} />
-                        </label>
+                        ) : null}
                       </div>
                       <button className="primary-button" type="submit" disabled={locked}>
                         {locked ? "Pronostico cerrado" : "Guardar pronostico"}

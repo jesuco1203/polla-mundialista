@@ -1185,20 +1185,32 @@ label {
 }
 
 .teams-row {
+  align-items: start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   min-height: 66px;
 }
 
 .team-side {
+  align-content: start;
+  display: grid;
+  min-width: 0;
+  gap: 0.55rem;
+}
+
+.team-side.right {
+  text-align: right;
+}
+
+.team-identity {
   align-items: center;
   display: flex;
   min-width: 0;
   gap: 0.55rem;
-  flex: 1;
 }
 
-.team-side.right {
+.team-side.right .team-identity {
   justify-content: flex-end;
-  text-align: right;
 }
 
 .team-side strong {
@@ -1206,6 +1218,20 @@ label {
   overflow-wrap: anywhere;
   font-size: 1.05rem;
   font-weight: 900;
+}
+
+.inline-score-input {
+  width: min(100%, 170px);
+  min-height: 48px;
+  border-color: var(--border-strong);
+  background: #ffffff;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 850;
+}
+
+.team-side.right .inline-score-input {
+  justify-self: end;
 }
 
 .team-mark {
@@ -1227,6 +1253,7 @@ label {
   color: var(--gold);
   font-size: 0.8rem;
   font-weight: 900;
+  padding-top: 0.82rem;
   text-transform: uppercase;
 }
 
@@ -1809,6 +1836,12 @@ label {
   font-weight: 880;
 }
 
+@media (max-width: 759px) {
+  .signup-stats {
+    display: none;
+  }
+}
+
 @media (min-width: 760px) {
   .site-nav {
     align-items: center;
@@ -2133,23 +2166,9 @@ label {
     overflow-x: auto;
   }
 
-  .teams-row {
-    align-items: stretch;
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
-  .team-side.right {
-    justify-content: flex-start;
-    text-align: left;
-  }
-
-  .team-side.right .team-mark {
-    order: -1;
-  }
-
   .versus {
     padding-left: 0.3rem;
+    padding-right: 0.3rem;
   }
 
   .data-table {
