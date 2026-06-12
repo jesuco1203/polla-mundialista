@@ -231,7 +231,9 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const displayMatches = todayMatches.length > 0 ? todayMatches : nextMatches;
   const openMatches = nextMatches.filter((match) => match.startsAt > now);
   const nextClose = openMatches[0]?.startsAt;
-  const shouldOpenRegisterPanel = Boolean(invitedByCode || referralError || authError || registeredParticipant);
+  const shouldOpenRegisterPanel = Boolean(
+    invitedByCode || referralError || authError || registeredParticipant || googleSession,
+  );
 
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
@@ -403,6 +405,23 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 <ReferralShare baseUrl={baseUrl} code={registeredParticipant.referralCode} />
               </>
             ) : null}
+            {googleParticipant && !registeredParticipant ? (
+              <>
+                <div className="registration-success">
+                  <BadgeCheck size={20} />
+                  <div>
+                    <strong>{googleParticipant.name}, este es tu link de invitacion.</strong>
+                    <span>Acceso para pronosticar: {googleParticipant.accessCode}</span>
+                    <span>Referido para invitar: {googleParticipant.referralCode}</span>
+                    <small>
+                      Comparte este link: puedes invitar hasta {REFERRAL_INVITE_LIMIT} amigos y sumar +
+                      {REFERRER_BONUS_POINTS} por cada pago confirmado.
+                    </small>
+                  </div>
+                </div>
+                <ReferralShare baseUrl={baseUrl} code={googleParticipant.referralCode} />
+              </>
+            ) : null}
 
             {referralError === "invalid" ? (
               <div className="registration-alert">
@@ -429,7 +448,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   <h2>Ya estoy inscrito</h2>
                 </div>
                 {googleParticipant ? (
-                  <p>Entraste como {googleParticipant.name}. Puedes pronosticar sin escribir tu codigo.</p>
+                  <p>Entraste como {googleParticipant.name}. Puedes pronosticar y compartir tu link de invitacion.</p>
                 ) : (
                   <p>Usa Google si tu correo ya esta inscrito, o tu codigo en cualquier partido abierto.</p>
                 )}
