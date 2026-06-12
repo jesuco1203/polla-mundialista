@@ -386,9 +386,27 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
 
           <details className="register-panel" open={shouldOpenRegisterPanel}>
             <summary>
-              <span>Entrar</span>
-              <span>Registrarme</span>
-              <small>S/10 · ranking automatico · max {REFERRAL_INVITE_LIMIT} referidos</small>
+              <div className="register-guide">
+                <small>{googleSession ? "Sesion iniciada" : "Elige tu camino"}</small>
+                <strong>
+                  {googleParticipant
+                    ? `Hola, ${googleParticipant.name}`
+                    : googleSession
+                      ? `Hola, ${googleSession.name}`
+                      : "Entra o registrate"}
+                </strong>
+                <span>
+                  {googleParticipant
+                    ? "Ya puedes pronosticar y compartir tu link de invitacion."
+                    : googleSession
+                      ? "Completa tu registro para generar tu codigo y link."
+                      : `S/10 · ranking automatico · max ${REFERRAL_INVITE_LIMIT} referidos`}
+                </span>
+              </div>
+              <div className="register-choice-grid" aria-hidden="true">
+                <span>Ya estoy inscrito</span>
+                <span>Crear mi inscripcion</span>
+              </div>
             </summary>
 
             {registeredParticipant ? (
