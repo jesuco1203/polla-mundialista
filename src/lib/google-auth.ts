@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 
 export const GOOGLE_SESSION_COOKIE = "pm_google_session";
 export const GOOGLE_STATE_COOKIE = "pm_google_state";
+export const GOOGLE_REFERRAL_COOKIE = "pm_google_ref";
 
 const SESSION_MAX_AGE = 60 * 60 * 24 * 14;
 

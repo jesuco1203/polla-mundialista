@@ -1,24 +1,31 @@
 import {
   BadgeCheck,
+  CalendarDays,
   ChevronRight,
   CircleDollarSign,
   Clock3,
+  Info,
   LogOut,
   Lock,
+  MapPin,
   Medal,
+  Save,
   Share2,
   ShieldCheck,
+  Star,
   Trophy,
   UserPlus,
 } from "lucide-react";
 import Image from "next/image";
 import { headers } from "next/headers";
 import {
+  completeGoogleParticipantPhone,
   registerParticipant,
   savePrediction,
 } from "@/app/actions";
 import { ReferralShare } from "@/app/referral-share";
-import { formatPeruDateTime, peruDayKey } from "@/lib/date-format";
+import { ScoreStepper } from "@/app/score-stepper";
+import { peruDayKey } from "@/lib/date-format";
 import { getGoogleSession } from "@/lib/google-auth";
 import { prisma } from "@/lib/prisma";
 import {
@@ -57,7 +64,7 @@ async function getBaseUrl() {
 }
 
 async function getDashboardData() {
-  const [config, participants, matches, leaderboard] = await Promise.all([
+  const [config, participants, matches] = await Promise.all([
     prisma.poolConfig.findFirst(),
     prisma.participant.findMany({
       orderBy: { createdAt: "desc" },
@@ -75,18 +82,9 @@ async function getDashboardData() {
       orderBy: { startsAt: "asc" },
       include: { predictions: true },
     }),
-    prisma.participant.findMany({
-      where: { paymentStatus: "PAID" },
-      include: {
-        predictions: true,
-        referrals: {
-          select: { paymentStatus: true },
-        },
-      },
-    }),
   ]);
 
-  const sortedLeaderboard = leaderboard
+  const sortedLeaderboard = participants
     .map((participant) => {
       const predictionPoints = participant.predictions.reduce(
         (total, prediction) => total + prediction.points,
@@ -162,6 +160,43 @@ function TeamMark({ name }: { name: string }) {
   return <span className="team-mark" aria-hidden="true">{initials || "?"}</span>;
 }
 
+function teamCode(name: string) {
+  const normalized = name.toLowerCase();
+  const knownCodes: Record<string, string> = {
+    "bosnia and herzegovina": "BIH",
+    canada: "CAN",
+    paraguay: "PAR",
+    "saudi arabia": "KSA",
+    spain: "ESP",
+    "united states": "USA",
+  };
+
+  return knownCodes[normalized] ?? name
+    .split(" ")
+    .filter(Boolean)
+    .map((word) => word[0])
+    .join("")
+    .slice(0, 3)
+    .toUpperCase();
+}
+
+function matchDateParts(startsAt: Date) {
+  return {
+    date: new Intl.DateTimeFormat("es-PE", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      timeZone: "America/Lima",
+    }).format(startsAt),
+    time: new Intl.DateTimeFormat("es-PE", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "America/Lima",
+    }).format(startsAt),
+  };
+}
+
 function MatchState({ locked }: { locked: boolean }) {
   return (
     <span className={locked ? "match-state closed" : "match-state open"}>
@@ -175,15 +210,17 @@ function SectionTitle({
   eyebrow,
   title,
   description,
+  icon,
 }: {
   eyebrow: string;
   title: string;
   description: string;
+  icon?: React.ReactNode;
 }) {
   return (
     <div className="section-title">
       <p>{eyebrow}</p>
-      <h2>{title}</h2>
+      <h2>{icon ? <span className="section-title-icon">{icon}</span> : null}{title}</h2>
       <span>{description}</span>
     </div>
   );
@@ -216,6 +253,9 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const googleParticipant = googleSession?.email
     ? participants.find((participant) => participant.email?.toLowerCase() === googleSession.email.toLowerCase()) ?? null
     : null;
+  const googleParticipantNeedsPhone = Boolean(
+    googleParticipant && ["", "Google"].includes(googleParticipant.phone.trim()),
+  );
   const potCents = paidParticipants.length * config.entryFeeCents;
   const winnerCents = Math.floor((potCents * config.winnerShare) / 100);
   const now = new Date();
@@ -228,6 +268,9 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const closeDays = Math.floor(closeDiffMs / 86_400_000);
   const closeHours = Math.floor((closeDiffMs % 86_400_000) / 3_600_000);
   const closeMinutes = Math.floor((closeDiffMs % 3_600_000) / 60_000);
+  const googleLoginHref = invitedByCode
+    ? `/api/auth/google?ref=${encodeURIComponent(invitedByCode)}`
+    : "/api/auth/google";
   const primaryHeroHref = "#registro";
   const primaryHeroLabel = googleParticipant
     ? "Ver mi invitacion"
@@ -479,6 +522,21 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   </div>
                 </div>
                 <ReferralShare baseUrl={baseUrl} code={googleParticipant.referralCode} />
+                {googleParticipantNeedsPhone ? (
+                  <form action={completeGoogleParticipantPhone} className="google-phone-form">
+                    <div>
+                      <strong>Completa tu celular</strong>
+                      <span>Ya entraste con Google. Solo falta tu WhatsApp para que el organizador pueda validar tu pago.</span>
+                    </div>
+                    <label>
+                      WhatsApp
+                      <input name="phone" placeholder="Ej. 999 999 999" required />
+                    </label>
+                    <button className="primary-button" type="submit">
+                      Guardar celular
+                    </button>
+                  </form>
+                ) : null}
                 <div className="auth-actions participant-shortcuts">
                   <a href="#participante" className="primary-button">
                     Ir a pronosticos
@@ -486,13 +544,6 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 </div>
               </>
             ) : null}
-            {googleSession && !googleParticipant && !registeredParticipant ? (
-              <div className="registration-alert">
-                Ya entraste con Google. Completa tu WhatsApp y presiona Registrarme para generar tu codigo y link de
-                invitacion.
-              </div>
-            ) : null}
-
             {referralError === "invalid" ? (
               <div className="registration-alert">
                 No encontramos el codigo {invitedByCode}. Revisa el codigo o registrate sin referido.
@@ -511,7 +562,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
               </div>
             ) : null}
 
-            {!googleParticipant && !registeredParticipant ? (
+            {!googleSession && !googleParticipant && !registeredParticipant ? (
               <div className="entry-options">
                 <div className="entry-choice-intro">
                   <strong>Elige una sola forma de entrar</strong>
@@ -525,7 +576,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   <p>Recomendado si quieres entrar rapido con tu correo.</p>
                   <div className="auth-actions">
                     {googleSession ? null : (
-                      <a className="google-button" href="/api/auth/google">
+                      <a className="google-button" href={googleLoginHref}>
                         <span className="google-logo" aria-hidden="true">G</span>
                         Entrar con Google
                       </a>
@@ -546,13 +597,13 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   <form action={registerParticipant} className="stacked-form">
                     <label>
                       Nombre
-                      <input name="name" placeholder="Ej. Juan Perez" defaultValue={googleSession?.name ?? ""} required />
+                      <input name="name" placeholder="Ej. Juan Perez" required />
                     </label>
                     <label>
                       WhatsApp
                       <input name="phone" placeholder="Ej. 999 999 999" required />
                     </label>
-                    <input name="email" type="hidden" value={googleSession?.email ?? ""} />
+                    <input name="email" type="hidden" value="" />
                     <input name="referralCode" type="hidden" value={invitedByCode} />
                     <button className="primary-button" type="submit">
                       Crear cuenta con WhatsApp
@@ -621,6 +672,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             <div className="participant-main">
             <SectionTitle
               eyebrow="Pronosticos"
+              icon={<CalendarDays size={30} />}
               title={todayMatches.length > 0 ? "Partidos de hoy" : "Proximos partidos"}
               description={
                 todayMatches.length > 0
@@ -636,7 +688,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   <span>Asi vinculamos tus puntos, tu pago y tus referidos con tu participante.</span>
                 </div>
                 <div className="auth-actions">
-                  <a className="primary-button" href={googleSession ? "#registro" : "/api/auth/google"}>
+                  <a className="primary-button" href={googleSession ? "#registro" : googleLoginHref}>
                     {googleSession ? "Completar registro" : "Entrar con Google"}
                   </a>
                   {googleSession ? null : (
@@ -654,6 +706,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
               ) : (
                 displayMatches.map((match) => {
                   const locked = match.startsAt <= now;
+                  const dateParts = matchDateParts(match.startsAt);
 
                   return (
                     <form action={savePrediction} className="match-card" key={match.id}>
@@ -667,54 +720,50 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                         <input name="accessCode" type="hidden" value={registeredParticipant?.accessCode ?? ""} />
                       ) : null}
 
+                      <div className="match-meta">
+                        <span><CalendarDays size={17} /> {dateParts.date}</span>
+                        <span><Clock3 size={17} /> {dateParts.time}</span>
+                        {match.venue ? <span><MapPin size={17} /> {match.venue}</span> : null}
+                      </div>
+
                       <div className="teams-row">
-                        <label className="team-side">
+                        <div className="team-side">
                           <span className="team-identity">
                             <TeamMark name={match.homeTeam} />
-                            <strong>{match.homeTeam}</strong>
+                            <strong>{teamCode(match.homeTeam)}</strong>
                           </span>
-                          <input
-                            aria-label={`Pronostico de ${match.homeTeam}`}
-                            className="inline-score-input"
-                            name="homeScore"
-                            type="number"
-                            min="0"
-                            max="30"
-                            defaultValue="1"
-                            required
-                            disabled={locked}
-                          />
-                        </label>
+                        </div>
                         <span className="versus">vs</span>
-                        <label className="team-side right">
+                        <div className="team-side right">
                           <span className="team-identity">
-                            <strong>{match.awayTeam}</strong>
                             <TeamMark name={match.awayTeam} />
+                            <strong>{teamCode(match.awayTeam)}</strong>
                           </span>
-                          <input
-                            aria-label={`Pronostico de ${match.awayTeam}`}
-                            className="inline-score-input"
-                            name="awayScore"
-                            type="number"
-                            min="0"
-                            max="30"
-                            defaultValue="0"
-                            required
-                            disabled={locked}
-                          />
-                        </label>
+                        </div>
                       </div>
 
                       <div className="match-schedule">
-                        <p className="match-date">
-                          {formatPeruDateTime(match.startsAt)}
-                          {match.venue ? ` · ${match.venue}` : ""}
-                        </p>
                         <p className={locked ? "match-close-note closed" : "match-close-note"}>
+                          <Lock size={15} />
                           {locked
                             ? "Pronosticos cerrados para este partido."
                             : "Cierra justo al iniciar este partido."}
                         </p>
+                      </div>
+
+                      <div className="prediction-panel">
+                        <div className="prediction-panel-heading">
+                          <div>
+                            <strong>Tu pronostico</strong>
+                            <span>
+                              {googleParticipant || registeredParticipant
+                                ? "Queda guardado a tu nombre."
+                                : "Si no has entrado, te pediremos crear cuenta al guardar."}
+                            </span>
+                          </div>
+                          <Info size={19} aria-hidden="true" />
+                        </div>
+                        <ScoreStepper homeTeam={match.homeTeam} awayTeam={match.awayTeam} locked={locked} />
                         {googleParticipant || registeredParticipant ? (
                           <p className="helper-text">
                             Pronosticas como {googleParticipant?.name ?? registeredParticipant?.name}.
@@ -722,6 +771,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                         ) : null}
                       </div>
                       <button className="primary-button" type="submit" disabled={locked}>
+                        <Save size={18} />
                         {locked ? "Pronostico cerrado" : "Guardar pronostico"}
                       </button>
                     </form>
@@ -729,6 +779,26 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 })
               )}
             </div>
+
+            <article className="mobile-points-card">
+              <div className="mobile-points-title">
+                <span><Star size={20} /></span>
+                <strong>Asi ganas puntos</strong>
+              </div>
+              <div className="mobile-points-grid">
+                <div>
+                  <span>Marcador exacto</span>
+                  <strong>+2 puntos</strong>
+                </div>
+                <div>
+                  <span>Resultado correcto</span>
+                  <strong>+1 punto</strong>
+                </div>
+              </div>
+              <p>
+                Cada partido se bloquea cuando inicia. <Lock size={14} />
+              </p>
+            </article>
           </div>
           </div>
         </section>

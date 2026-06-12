@@ -170,6 +170,32 @@ export async function registerParticipant(formData: FormData) {
   redirect(`/?registered=${encodeURIComponent(participant.referralCode)}#registro`);
 }
 
+export async function completeGoogleParticipantPhone(formData: FormData) {
+  const googleSession = await getGoogleSession();
+  if (!googleSession?.email) {
+    redirect("/?authError=google_profile#registro");
+  }
+
+  const phone = z.string().trim().min(6).max(30).parse(formData.get("phone"));
+  const participant = await prisma.participant.updateMany({
+    where: { email: googleSession.email.toLowerCase() },
+    data: { phone },
+  });
+
+  await logEvent({
+    actor: googleSession.email,
+    event: "participant.google_phone_completed",
+    payload: {
+      phone,
+      updatedCount: participant.count,
+    },
+    targetType: "Participant",
+  });
+
+  revalidatePath("/");
+  redirect("/#registro");
+}
+
 export async function savePrediction(formData: FormData) {
   const parsed = predictionSchema.parse({
     accessCode: formData.get("accessCode"),

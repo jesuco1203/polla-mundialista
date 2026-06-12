@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
+  GOOGLE_REFERRAL_COOKIE,
   GOOGLE_STATE_COOKIE,
   createGoogleState,
   getAppUrl,
@@ -13,6 +14,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/?authError=missing_config#registro", appUrl));
   }
 
+  const referralCode = request.nextUrl.searchParams.get("ref")?.trim().toUpperCase();
   const state = createGoogleState();
   const redirectUri = `${appUrl}/api/auth/google/callback`;
   const googleUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
@@ -28,6 +30,12 @@ export async function GET(request: NextRequest) {
     ...googleCookieOptions(appUrl),
     maxAge: 60 * 10,
   });
+  if (referralCode) {
+    response.cookies.set(GOOGLE_REFERRAL_COOKIE, referralCode, {
+      ...googleCookieOptions(appUrl),
+      maxAge: 60 * 10,
+    });
+  }
 
   return response;
 }
