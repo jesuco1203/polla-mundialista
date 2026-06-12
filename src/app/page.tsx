@@ -5,6 +5,7 @@ import {
   CircleDollarSign,
   Clock3,
   Info,
+  LogIn,
   LogOut,
   Lock,
   MapPin,
@@ -436,12 +437,6 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
 
         <section className="conversion-grid" id="registro">
           <div className="signup-copy">
-            <SectionTitle
-              eyebrow="Inscripcion"
-              title="Entra a la polla en menos de un minuto"
-              description="Registrate, confirma tu pago y activa tus pronosticos. Tu codigo de referido queda listo para compartir."
-            />
-
             <figure className="mascot-card">
               <Image
                 src="/images/mascot-condor.png"
@@ -458,11 +453,6 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 </span>
               </figcaption>
             </figure>
-
-            <div className="notice">
-              <BadgeCheck size={18} />
-              <span>El codigo para pronosticar se activa cuando tu pago queda marcado como pagado.</span>
-            </div>
           </div>
 
           <aside className="signup-stats" aria-label="Resumen de inscripcion">
@@ -563,10 +553,6 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
 
             {!googleSession && !googleParticipant && !registeredParticipant ? (
               <div className="entry-options">
-                <div className="entry-choice-intro">
-                  <strong>Elige una sola forma de entrar</strong>
-                  <span>Puedes usar Google o crear tu cuenta con nombre y WhatsApp. No necesitas hacer ambas.</span>
-                </div>
                 <div className="entry-card existing-user entry-google-card">
                   <div>
                     <Lock size={18} />
@@ -615,58 +601,6 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
         </section>
 
         <section className="dashboard-grid" id="dashboard">
-          <div className="ranking-section" id="ranking">
-            <SectionTitle
-              eyebrow="Competencia"
-              title="Ranking general"
-              description="Gana quien acumule mas puntos por pronosticos y bonus de referidos."
-            />
-            <div className="leaderboard-panel">
-              {leaderboard.length === 0 ? (
-                <div className="soft-empty-state">
-                  <strong>El ranking aparecera cuando se confirmen los primeros pagos.</strong>
-                  <span>
-                    Los participantes suman 2 puntos por marcador exacto, 1 por resultado correcto y bonus por referidos.
-                  </span>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="data-table">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Participante</th>
-                        <th>Exactos</th>
-                        <th>Pronosticos</th>
-                        <th>Referidos</th>
-                        <th>Bonus</th>
-                        <th>Puntos</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {leaderboard.map((participant, index) => (
-                        <tr key={participant.id}>
-                          <td>{index + 1}</td>
-                          <td>
-                            <span className="participant-name-cell">
-                              <TeamMark name={participant.name} />
-                              <span>{participant.name}</span>
-                            </span>
-                          </td>
-                          <td>{participant.exactHits}</td>
-                          <td>{participant.predictedMatches}</td>
-                          <td>{participant.paidReferralCount}/{REFERRAL_INVITE_LIMIT}</td>
-                          <td>+{participant.totalBonusPoints}</td>
-                          <td className="score-cell">{participant.totalPoints}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-
           <div className="participant-layout" id="participante">
             <div className="participant-main">
             <SectionTitle
@@ -813,6 +747,58 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             </article>
           </div>
           </div>
+
+          <div className="ranking-section" id="ranking">
+            <SectionTitle
+              eyebrow="Competencia"
+              title="Ranking general"
+              description="Gana quien acumule mas puntos por pronosticos y bonus de referidos."
+            />
+            <div className="leaderboard-panel">
+              {leaderboard.length === 0 ? (
+                <div className="soft-empty-state">
+                  <strong>El ranking aparecera cuando se confirmen los primeros pagos.</strong>
+                  <span>
+                    Los participantes suman 2 puntos por marcador exacto, 1 por resultado correcto y bonus por referidos.
+                  </span>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="data-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Participante</th>
+                        <th>Exactos</th>
+                        <th>Pronosticos</th>
+                        <th>Referidos</th>
+                        <th>Bonus</th>
+                        <th>Puntos</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {leaderboard.map((participant, index) => (
+                        <tr key={participant.id}>
+                          <td>{index + 1}</td>
+                          <td>
+                            <span className="participant-name-cell">
+                              <TeamMark name={participant.name} />
+                              <span>{participant.name}</span>
+                            </span>
+                          </td>
+                          <td>{participant.exactHits}</td>
+                          <td>{participant.predictedMatches}</td>
+                          <td>{participant.paidReferralCount}/{REFERRAL_INVITE_LIMIT}</td>
+                          <td>+{participant.totalBonusPoints}</td>
+                          <td className="score-cell">{participant.totalPoints}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </div>
         </section>
 
         <section className="proof-grid" aria-label="Reglas y confianza">
@@ -845,15 +831,14 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
         </nav>
 
       </div>
-      {loggedParticipantName ? (
-        <nav className="mobile-user-bar" aria-label="Acciones rapidas del participante">
+      <nav className="mobile-user-bar" aria-label="Acciones rapidas">
           <div className="mobile-user-info">
-            <strong>{loggedParticipantShortName}</strong>
+            <strong>{loggedParticipantShortName || "Entrar"}</strong>
           </div>
           <div className="mobile-user-actions">
-            <a href="#participante">
-              <CalendarDays size={17} />
-              Pronostico
+            <a href={hasParticipant ? "#participante" : "#registro"}>
+              {hasParticipant ? <CalendarDays size={17} /> : <LogIn size={17} />}
+              {hasParticipant ? "Pronostico" : "Entrar"}
             </a>
             <a href="#ranking">
               <Trophy size={17} />
@@ -861,7 +846,6 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             </a>
           </div>
         </nav>
-      ) : null}
     </main>
   );
 }

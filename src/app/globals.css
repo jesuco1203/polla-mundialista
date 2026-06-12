@@ -2054,7 +2054,7 @@ label {
   }
 }
 
-@media (max-width: 759px) {
+@media (max-width: 1023px) {
   .app-shell {
     padding-bottom: 9rem;
   }
