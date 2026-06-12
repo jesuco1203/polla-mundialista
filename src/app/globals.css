@@ -2337,6 +2337,10 @@ label {
   grid-template-columns: minmax(0, 1fr);
 }
 
+.admin-card-wide {
+  grid-column: 1 / -1;
+}
+
 .admin-card {
   background: #fbfcf8;
 }
@@ -2370,6 +2374,123 @@ label {
 .participant-payment-form {
   display: grid;
   gap: 0.6rem;
+}
+
+.participant-insights {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.participant-insight-card {
+  display: grid;
+  gap: 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 0.9rem;
+}
+
+.participant-insight-head {
+  align-items: flex-start;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.participant-insight-head strong,
+.participant-insight-head span {
+  display: block;
+}
+
+.participant-insight-head strong {
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.participant-insight-head span {
+  margin-top: 0.18rem;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  font-weight: 720;
+  line-height: 1.35;
+}
+
+.participant-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.participant-stat-grid div {
+  border: 1px solid rgba(16, 145, 86, 0.14);
+  border-radius: 8px;
+  background: #f5fbf7;
+  padding: 0.65rem;
+}
+
+.participant-stat-grid span,
+.participant-activity-summary span,
+.activity-mini-row span,
+.activity-mini-list > span {
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-weight: 820;
+}
+
+.participant-stat-grid strong {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--foreground);
+  font-size: 1.05rem;
+  font-weight: 930;
+}
+
+.participant-activity-summary {
+  display: grid;
+  gap: 0.22rem;
+  border-left: 3px solid var(--accent);
+  padding-left: 0.75rem;
+}
+
+.participant-activity-summary strong {
+  font-size: 0.92rem;
+  font-weight: 880;
+}
+
+.participant-activity-summary small {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  font-weight: 720;
+}
+
+.activity-mini-list {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.activity-mini-row {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.7fr) minmax(120px, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.45rem;
+}
+
+.activity-mini-row strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 820;
+}
+
+.activity-mini-row time {
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-weight: 720;
+  text-align: right;
 }
 
 .status-pill {
@@ -2794,6 +2915,26 @@ label {
   .admin-summary-grid,
   .score-inputs {
     grid-template-columns: 1fr;
+  }
+
+  .participant-insight-head {
+    display: grid;
+  }
+
+  .participant-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .activity-mini-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .activity-mini-row strong {
+    white-space: normal;
+  }
+
+  .activity-mini-row time {
+    text-align: left;
   }
 
   .hero-actions {
