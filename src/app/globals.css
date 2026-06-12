@@ -61,6 +61,37 @@ select {
   outline: none;
 }
 
+.password-field {
+  position: relative;
+  display: block;
+}
+
+.password-field input {
+  padding-right: 3rem;
+}
+
+.password-field button {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  align-items: center;
+  display: inline-flex;
+  height: 38px;
+  justify-content: center;
+  width: 38px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  transform: translateY(-50%);
+}
+
+.password-field button:hover,
+.password-field button:focus-visible {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
 input:focus,
 select:focus,
 button:focus-visible,

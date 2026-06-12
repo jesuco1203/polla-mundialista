@@ -26,6 +26,7 @@ import {
   savePrediction,
 } from "@/app/actions";
 import { ReferralShare } from "@/app/referral-share";
+import { PasswordField } from "@/app/password-field";
 import { ScoreStepper } from "@/app/score-stepper";
 import { peruDayKey } from "@/lib/date-format";
 import { getGoogleSession } from "@/lib/google-auth";
@@ -638,7 +639,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                       <strong>Crear contraseña</strong>
                       <label>
                         Tu contraseña
-                        <input name="password" type="password" placeholder="Minimo 4 caracteres" required minLength={4} />
+                        <PasswordField name="password" placeholder="Minimo 4 caracteres" />
                       </label>
                       <input name="email" type="hidden" value="" />
                       <input name="referralCode" type="hidden" value={invitedByCode} />
@@ -658,7 +659,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                       </label>
                       <label>
                         Contraseña
-                        <input name="password" type="password" placeholder="Tu contraseña" required minLength={4} />
+                        <PasswordField name="password" placeholder="Tu contraseña" />
                       </label>
                       <button className="secondary-button" type="submit">
                         Entrar con contraseña
