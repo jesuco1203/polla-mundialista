@@ -1,6 +1,5 @@
 import {
   BadgeCheck,
-  CalendarClock,
   ChevronRight,
   CircleDollarSign,
   Clock3,
@@ -12,7 +11,6 @@ import {
   ShieldCheck,
   Trophy,
   UserPlus,
-  Users,
 } from "lucide-react";
 import Image from "next/image";
 import { headers } from "next/headers";
@@ -21,7 +19,7 @@ import {
   savePrediction,
 } from "@/app/actions";
 import { ReferralShare } from "@/app/referral-share";
-import { formatPeruDateTime, formatPeruShortDateTime, peruDayKey } from "@/lib/date-format";
+import { formatPeruDateTime, peruDayKey } from "@/lib/date-format";
 import { getGoogleSession } from "@/lib/google-auth";
 import { prisma } from "@/lib/prisma";
 import {
@@ -214,11 +212,6 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
       })
     : null;
   const paidParticipants = participants.filter((participant) => participant.paymentStatus === "PAID");
-  const paidReferrals = participants.reduce(
-    (total, participant) =>
-      total + participant.referrals.filter((referral) => referral.paymentStatus === "PAID").length,
-    0,
-  );
   const googleParticipant = googleSession?.email
     ? participants.find((participant) => participant.email?.toLowerCase() === googleSession.email.toLowerCase()) ?? null
     : null;
@@ -230,37 +223,73 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const displayMatches = todayMatches.length > 0 ? todayMatches : nextMatches;
   const openMatches = nextMatches.filter((match) => match.startsAt > now);
   const nextClose = openMatches[0]?.startsAt;
+  const closeDiffMs = nextClose ? Math.max(0, nextClose.getTime() - now.getTime()) : 0;
+  const closeDays = Math.floor(closeDiffMs / 86_400_000);
+  const closeHours = Math.floor((closeDiffMs % 86_400_000) / 3_600_000);
+  const closeMinutes = Math.floor((closeDiffMs % 3_600_000) / 60_000);
   const primaryHeroHref = googleSession ? "#registro" : "/api/auth/google";
   const primaryHeroLabel = googleParticipant
     ? "Ver mi invitacion"
     : googleSession
       ? "Completar registro"
       : "Entrar o registrarme";
-  const shouldOpenRegisterPanel = Boolean(
-    invitedByCode || referralError || authError || registeredParticipant || googleSession,
-  );
 
   return (
     <main className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <section className="hero-shell">
+        <header className="site-header">
+          <a className="brand-lockup" href="#top" aria-label="Polla Mundial 2026">
+            <span className="brand-ball"><Trophy size={20} /></span>
+            <span>
+              <strong>Polla</strong>
+              <small>Mundial 2026</small>
+            </span>
+          </a>
+          <nav className="site-nav" aria-label="Navegacion principal">
+            <a href="#como-funciona">Como funciona</a>
+            {leaderboard.length > 0 ? <a href="#ranking">Ranking</a> : null}
+            <a href="#participante">Pronosticos</a>
+            <a href="#referidos">Referidos</a>
+          </nav>
+          <a href={primaryHeroHref} className="header-cta">
+            Entrar
+            <ChevronRight size={16} />
+          </a>
+        </header>
+
         <div className="hero-grid">
           <div className="hero-copy">
             <div className="eyebrow">
               <Trophy size={16} />
-              Mundial 2026
+              Polla Mundial 2026
             </div>
-            <h1>Participa en la Polla del Mundial 2026</h1>
+            <h1>Acierta los resultados y gana el pozo</h1>
             <p>
-              Inscribete por S/10, pronostica cada partido y compite por el pozo acumulado. Tu acceso se activa cuando
-              confirmamos tu pago.
+              La polla del Mundial 2026. Facil de jugar, ranking automatico y premios claros desde el primer partido.
             </p>
+
+            <div className="hero-stats" aria-label="Estadisticas principales">
+              <div>
+                <CircleDollarSign size={18} />
+                <span>Inscripcion</span>
+                <strong>{formatMoney(config.entryFeeCents, config.currency)}</strong>
+              </div>
+              <div>
+                <CircleDollarSign size={18} />
+                <span>Pozo acumulado</span>
+                <strong>{formatMoney(potCents, config.currency)}</strong>
+              </div>
+              <div>
+                <Medal size={18} />
+                <span>Premio estimado</span>
+                <strong>{formatMoney(winnerCents, config.currency)}</strong>
+              </div>
+            </div>
+
             <div className="hero-actions">
               <a href={primaryHeroHref} className="primary-link">
                 {primaryHeroLabel}
                 <ChevronRight size={18} />
-              </a>
-              <a href="#como-funciona" className="ghost-link">
-                Como funciona
               </a>
             </div>
             <div className="auth-strip">
@@ -275,7 +304,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   </form>
                 </>
               ) : (
-                <span>Registro rapido con Google o WhatsApp.</span>
+                <span><Lock size={14} /> Pago 100% seguro. Acceso activado al confirmar S/10.</span>
               )}
             </div>
           </div>
@@ -289,49 +318,25 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
               height={747}
               priority
             />
-            <div className="hero-board">
-              <div className="hero-board-header">
-                <span>Pozo acumulado</span>
-                <strong>{formatMoney(potCents, config.currency)}</strong>
+            <div className="closing-card">
+              <span>Cierre de pronosticos</span>
+              <div className="countdown-grid" aria-label="Tiempo al proximo cierre">
+                <strong>{String(closeDays).padStart(2, "0")}<small>Dias</small></strong>
+                <strong>{String(closeHours).padStart(2, "0")}<small>Horas</small></strong>
+                <strong>{String(closeMinutes).padStart(2, "0")}<small>Min</small></strong>
               </div>
-
-              <div className="scoreboard">
-                <div>
-                  <TeamMark name="Polla" />
-                  <span>{paidParticipants.length} pagados</span>
-                </div>
-                <strong>VS</strong>
-                <div>
-                  <TeamMark name="Premio" />
-                  <span>{formatMoney(winnerCents, config.currency)} premio</span>
-                </div>
-              </div>
-
-              <dl className="rules-grid">
-                <div>
-                  <CircleDollarSign size={16} />
-                  <dt>Inscripcion</dt>
-                  <dd>{formatMoney(config.entryFeeCents, config.currency)}</dd>
-                </div>
-                <div>
-                  <CalendarClock size={16} />
-                  <dt>Cierre</dt>
-                  <dd>
-                    {nextClose ? formatPeruShortDateTime(nextClose) : "Por partido"}
-                  </dd>
-                </div>
-                <div>
-                  <Share2 size={16} />
-                  <dt>Referidos</dt>
-                  <dd>+{REFERRER_BONUS_POINTS} pts por amigo</dd>
-                </div>
-              </dl>
+              <ul>
+                <li><BadgeCheck size={16} /> Acierta y suma puntos</li>
+                <li><BadgeCheck size={16} /> Compite en el ranking</li>
+                <li><BadgeCheck size={16} /> Invita hasta {REFERRAL_INVITE_LIMIT} amigos</li>
+              </ul>
             </div>
           </aside>
         </div>
       </section>
 
       <nav className="view-tabs" aria-label="Vistas principales">
+        <a href="#como-funciona">Como funciona</a>
         <a href="#registro">Inscripcion</a>
         {leaderboard.length > 0 ? <a href="#ranking">Ranking</a> : null}
         <a href="#participante">Pronosticos</a>
@@ -339,6 +344,34 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
       </nav>
 
       <div className="app-shell">
+        <section className="how-card" id="como-funciona">
+          <div className="signup-copy">
+            <SectionTitle
+              eyebrow="Como funciona"
+              title="Juegas en tres pasos"
+              description="El recorrido queda claro antes de registrarte: pagas, pronosticas y compites por el pozo."
+            />
+
+            <div className="flow-steps" aria-label="Como funciona">
+              <div>
+                <strong>1</strong>
+                <UserPlus size={34} />
+                <span>Registrate con Google o WhatsApp.</span>
+              </div>
+              <div>
+                <strong>2</strong>
+                <CircleDollarSign size={34} />
+                <span>Confirma tu pago de S/10.</span>
+              </div>
+              <div>
+                <strong>3</strong>
+                <Trophy size={34} />
+                <span>Pronostica y comparte tu referido.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="conversion-grid" id="registro">
           <div className="signup-copy">
             <SectionTitle
@@ -364,52 +397,34 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
               </figcaption>
             </figure>
 
-            <div className="flow-steps" id="como-funciona" aria-label="Como funciona">
-              <div>
-                <strong>1</strong>
-                <span>Registrate con Google o WhatsApp.</span>
-              </div>
-              <div>
-                <strong>2</strong>
-                <span>Confirma tu pago de S/10.</span>
-              </div>
-              <div>
-                <strong>3</strong>
-                <span>Pronostica y comparte tu referido.</span>
-              </div>
-            </div>
-
             <div className="notice">
               <BadgeCheck size={18} />
               <span>El codigo para pronosticar se activa cuando tu pago queda marcado como pagado.</span>
             </div>
           </div>
 
-          <details className="register-panel" open={shouldOpenRegisterPanel}>
-            <summary>
-              <div className="register-guide">
-                <small>{googleSession ? "Sesion iniciada" : "Elige tu camino"}</small>
-                <strong>
-                  {googleParticipant
-                    ? `Hola, ${googleParticipant.name}`
-                    : googleSession
-                      ? `Hola, ${googleSession.name}`
-                      : "Entra o registrate"}
-                </strong>
-                <span>
-                  {googleParticipant
-                    ? "Ya puedes pronosticar y compartir tu link de invitacion."
-                    : googleSession
-                      ? "Completa tu registro para generar tu codigo y link."
-                      : `S/10 · ranking automatico · max ${REFERRAL_INVITE_LIMIT} referidos`}
-                </span>
-              </div>
-              <div className="register-choice-grid" aria-hidden="true">
-                <span>Ya estoy inscrito</span>
-                <span>Crear mi inscripcion</span>
-              </div>
-            </summary>
+          <aside className="signup-stats" aria-label="Resumen de inscripcion">
+            <StatCard
+              icon={<CircleDollarSign size={20} />}
+              label="Inscripcion"
+              value={formatMoney(config.entryFeeCents, config.currency)}
+              detail="Pago unico para activar tu acceso"
+            />
+            <StatCard
+              icon={<CircleDollarSign size={20} />}
+              label="Pozo acumulado"
+              value={formatMoney(potCents, config.currency)}
+              detail="Actualizado con pagos confirmados"
+            />
+            <StatCard
+              icon={<Medal size={20} />}
+              label="Premio al ganador"
+              value={formatMoney(winnerCents, config.currency)}
+              detail={`${config.winnerShare}% del pozo`}
+            />
+          </aside>
 
+          <div className="register-panel">
             {registeredParticipant ? (
               <>
                 <div className="registration-success">
@@ -519,52 +534,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 </form>
               </div>
             </div>
-          </details>
-        </section>
-
-        <section className="kpi-strip" aria-label="Resumen de la polla">
-          {paidParticipants.length > 0 ? (
-            <StatCard
-              icon={<Users size={20} />}
-              label="Inscritos pagados"
-              value={`${paidParticipants.length}`}
-              detail={`${participants.length} registros totales`}
-            />
-          ) : null}
-          <StatCard
-            icon={<CircleDollarSign size={20} />}
-            label="Inscripcion"
-            value={formatMoney(config.entryFeeCents, config.currency)}
-            detail="Pago unico para activar tu acceso"
-          />
-          <StatCard
-            icon={<CircleDollarSign size={20} />}
-            label="Pozo acumulado"
-            value={formatMoney(potCents, config.currency)}
-            detail="Actualizado con pagos confirmados"
-          />
-          <StatCard
-            icon={<Medal size={20} />}
-            label="Premio al ganador"
-            value={formatMoney(winnerCents, config.currency)}
-            detail={`${config.winnerShare}% del pozo`}
-          />
-          {nextClose ? (
-            <StatCard
-              icon={<CalendarClock size={20} />}
-              label="Cierre proximo"
-              value={formatPeruShortDateTime(nextClose)}
-              detail="Pronostico bloqueado al iniciar"
-            />
-          ) : null}
-          {paidReferrals > 0 ? (
-            <StatCard
-              icon={<Share2 size={20} />}
-              label="Referidos pagados"
-              value={`${paidReferrals}`}
-              detail={`+${REFERRER_BONUS_POINTS} pts por amigo, max ${REFERRAL_INVITE_LIMIT}`}
-            />
-          ) : null}
+          </div>
         </section>
 
         <section className="ranking-section" id="ranking">
