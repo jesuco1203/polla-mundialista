@@ -1107,7 +1107,7 @@ label {
   width: 100%;
 }
 
-.password-choice,
+.entry-method-card,
 .phone-login-box {
   display: grid;
   gap: 0.75rem;
@@ -1115,6 +1115,59 @@ label {
   border-radius: 8px;
   background: var(--surface);
   padding: 0.85rem;
+}
+
+.google-method-card {
+  border-color: rgba(16, 145, 86, 0.28);
+  background: #f2fbf5;
+}
+
+.password-choice {
+  border-color: rgba(8, 88, 54, 0.28);
+  background: #ffffff;
+}
+
+.method-label {
+  color: var(--muted-foreground);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.entry-method-card > strong {
+  color: var(--foreground);
+  font-size: 1.15rem;
+  font-weight: 950;
+}
+
+.entry-method-divider {
+  align-items: center;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.75rem;
+  color: var(--accent-strong);
+  font-size: 0.9rem;
+  font-weight: 950;
+}
+
+.entry-method-divider::before,
+.entry-method-divider::after {
+  content: "";
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(8, 88, 54, 0.18);
+}
+
+.entry-method-divider span {
+  align-items: center;
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+  border: 1px solid rgba(8, 88, 54, 0.22);
+  border-radius: 999px;
+  background: #ffffff;
 }
 
 .phone-login-box {

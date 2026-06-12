@@ -616,18 +616,28 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                       <span className="step-number">2</span>
                       <div>
                         <h3>Elige como vas a entrar</h3>
-                        <p>Usa Google o crea una contraseña. Solo necesitas una opcion.</p>
+                        <p>Escoge solo una forma: Google o contraseña.</p>
                       </div>
                     </div>
 
-                    <a className="google-button guided-google-button" href={googleLoginHref}>
-                      <span className="google-logo" aria-hidden="true">G</span>
-                      Entrar con Google
-                    </a>
+                    <div className="entry-method-card google-method-card">
+                      <span className="method-label">Opcion rapida</span>
+                      <strong>Entrar con Google</strong>
+                      <a className="google-button guided-google-button" href={googleLoginHref}>
+                        <span className="google-logo" aria-hidden="true">G</span>
+                        Usar Google
+                      </a>
+                    </div>
 
-                    <div className="password-choice">
+                    <div className="entry-method-divider" aria-hidden="true">
+                      <span>O</span>
+                    </div>
+
+                    <div className="entry-method-card password-choice">
+                      <span className="method-label">Opcion con celular</span>
+                      <strong>Crear contraseña</strong>
                       <label>
-                        Crear contraseña
+                        Tu contraseña
                         <input name="password" type="password" placeholder="Minimo 4 caracteres" required minLength={4} />
                       </label>
                       <input name="email" type="hidden" value="" />
