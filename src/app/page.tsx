@@ -339,7 +339,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
               priority
             />
             <div className="closing-card">
-              <span>Cierre de pronosticos</span>
+              <span>Proximo cierre de pronosticos</span>
               <div className="countdown-grid" aria-label="Tiempo al proximo cierre">
                 <strong>{String(closeDays).padStart(2, "0")}<small>Dias</small></strong>
                 <strong>{String(closeHours).padStart(2, "0")}<small>Horas</small></strong>
@@ -674,10 +674,17 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                         </div>
                       </div>
 
-                      <p className="match-date">
-                        {formatPeruDateTime(match.startsAt)}
-                        {match.venue ? ` · ${match.venue}` : ""}
-                      </p>
+                      <div className="match-schedule">
+                        <p className="match-date">
+                          {formatPeruDateTime(match.startsAt)}
+                          {match.venue ? ` · ${match.venue}` : ""}
+                        </p>
+                        <p className={locked ? "match-close-note closed" : "match-close-note"}>
+                          {locked
+                            ? "Pronosticos cerrados para este partido."
+                            : "Cierra justo al iniciar este partido."}
+                        </p>
+                      </div>
 
                       <input type="hidden" name="matchId" value={match.id} />
                       {googleParticipant || registeredParticipant ? (

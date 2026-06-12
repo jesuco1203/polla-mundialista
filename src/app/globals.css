@@ -1234,6 +1234,26 @@ label {
   font-size: 0.86rem;
 }
 
+.match-schedule {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.match-close-note {
+  width: fit-content;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 840;
+  padding: 0.32rem 0.58rem;
+}
+
+.match-close-note.closed {
+  background: #f3e4e2;
+  color: var(--danger);
+}
+
 .prediction-box-title {
   display: grid;
   gap: 0.18rem;
