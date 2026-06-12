@@ -24,7 +24,7 @@ import {
   participantCookieOptions,
   verifyParticipantPassword,
 } from "@/lib/participant-auth";
-import { parsePeruDateTimeInput } from "@/lib/date-format";
+import { parsePeruDateTimeInput, peruDayKey } from "@/lib/date-format";
 import { REFERRAL_INVITE_LIMIT } from "@/lib/referral-bonus";
 import { makeAccessCode, scorePrediction } from "@/lib/scoring";
 
@@ -100,6 +100,10 @@ async function makeUniqueParticipantCode(field: "accessCode" | "referralCode") {
 
 function normalizeCode(code: string | undefined) {
   return code?.trim().toUpperCase() || "";
+}
+
+function isSamePeruDay(left: Date, right: Date) {
+  return peruDayKey(left) === peruDayKey(right);
 }
 
 export async function registerParticipant(formData: FormData) {
@@ -301,7 +305,7 @@ export async function savePrediction(formData: FormData) {
     redirect("/?predictionNotice=login#participante");
   }
 
-  if (participant.paymentStatus !== "PAID") {
+  if (participant.paymentStatus !== "PAID" && !isSamePeruDay(participant.createdAt, new Date())) {
     redirect("/?predictionNotice=payment#participante");
   }
 

@@ -18,6 +18,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { headers } from "next/headers";
 import {
   completeGoogleParticipantPhone,
@@ -725,20 +726,6 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 </div>
               </div>
             ) : null}
-            {predictionNotice === "payment" ? (
-              <div className="prediction-login-alert payment-pending-alert">
-                <div>
-                  <strong>Tu pronostico aun no se guardo porque falta confirmar tu pago.</strong>
-                  <span>Cuando el organizador apruebe tu pago de inscripcion, podras guardar marcadores y sumar puntos.</span>
-                </div>
-                <div className="auth-actions">
-                  <a className="primary-button" href="#registro">
-                    Ver mi inscripcion
-                  </a>
-                </div>
-              </div>
-            ) : null}
-
             <div className="match-grid">
               {displayMatches.length === 0 ? (
                 <p className="empty-text">No hay partidos pendientes cargados.</p>
@@ -980,6 +967,31 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             </a>
           </div>
         </nav>
+      {predictionNotice === "payment" ? (
+        <div className="payment-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+          <div className="payment-modal">
+            <div className="payment-modal-icon">
+              <Lock size={30} />
+            </div>
+            <div>
+              <p>Pago pendiente</p>
+              <h2 id="payment-modal-title">Falta confirmar tu pago</h2>
+              <span>
+                Puedes pronosticar durante tu primer dia de inscripcion. Desde el segundo dia, el organizador debe
+                confirmar tu pago para seguir guardando marcadores.
+              </span>
+            </div>
+            <div className="payment-modal-actions">
+              <Link className="primary-button" href="/#registro">
+                Ver mi inscripcion
+              </Link>
+              <Link className="secondary-button" href="/#participante">
+                Entendido
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

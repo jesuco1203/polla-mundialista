@@ -1319,6 +1319,73 @@ label {
   background: linear-gradient(135deg, #fff7e6, #ffffff);
 }
 
+.payment-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  align-items: center;
+  display: grid;
+  justify-items: center;
+  background: rgba(7, 14, 10, 0.72);
+  padding: 1rem;
+}
+
+.payment-modal {
+  display: grid;
+  gap: 1rem;
+  width: min(100%, 430px);
+  border: 1px solid rgba(185, 130, 33, 0.32);
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.32);
+  padding: 1.2rem;
+  text-align: center;
+}
+
+.payment-modal-icon {
+  align-items: center;
+  display: inline-flex;
+  height: 62px;
+  justify-content: center;
+  justify-self: center;
+  width: 62px;
+  border-radius: 50%;
+  background: #fff2d4;
+  color: var(--warning);
+}
+
+.payment-modal p {
+  color: var(--warning);
+  font-size: 0.78rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.payment-modal h2 {
+  margin-top: 0.2rem;
+  color: var(--foreground);
+  font-size: 1.55rem;
+  font-weight: 950;
+}
+
+.payment-modal span {
+  display: block;
+  margin-top: 0.55rem;
+  color: var(--muted-foreground);
+  font-size: 0.96rem;
+  line-height: 1.5;
+}
+
+.payment-modal-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.65rem;
+}
+
+.payment-modal-actions a {
+  text-decoration: none;
+}
+
 .prediction-login-alert .primary-button,
 .prediction-login-alert .secondary-button {
   width: auto;
