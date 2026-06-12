@@ -3,13 +3,11 @@ import {
   CalendarClock,
   ChevronRight,
   CircleDollarSign,
-  ClipboardList,
   Clock3,
   LogIn,
   LogOut,
   Lock,
   Medal,
-  RefreshCcw,
   Share2,
   ShieldCheck,
   Trophy,
@@ -17,17 +15,14 @@ import {
   Users,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { headers } from "next/headers";
 import {
-  createMatch,
-  markPayment,
   registerParticipant,
   savePrediction,
-  syncMatches,
-  testGoogleLogging,
-  updateMatchResult,
 } from "@/app/actions";
 import { ReferralShare } from "@/app/referral-share";
+import { formatPeruDateTime, formatPeruShortDateTime, peruDayKey } from "@/lib/date-format";
 import { getGoogleSession } from "@/lib/google-auth";
 import { prisma } from "@/lib/prisma";
 import { formatMoney } from "@/lib/scoring";
@@ -59,7 +54,7 @@ async function getBaseUrl() {
 }
 
 async function getDashboardData() {
-  const [config, participants, matches, leaderboard, auditLogs] = await Promise.all([
+  const [config, participants, matches, leaderboard] = await Promise.all([
     prisma.poolConfig.findFirst(),
     prisma.participant.findMany({
       orderBy: { createdAt: "desc" },
@@ -80,10 +75,6 @@ async function getDashboardData() {
     prisma.participant.findMany({
       where: { paymentStatus: "PAID" },
       include: { predictions: true },
-    }),
-    prisma.auditLog.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 12,
     }),
   ]);
 
@@ -114,7 +105,6 @@ async function getDashboardData() {
     },
     participants,
     matches,
-    auditLogs,
     leaderboard: sortedLeaderboard,
   };
 }
@@ -140,13 +130,6 @@ function StatCard({
       </div>
     </section>
   );
-}
-
-function StatusPill({ status }: { status: string }) {
-  const label =
-    status === "PAID" ? "Pagado" : status === "REJECTED" ? "Observado" : "Pendiente";
-
-  return <span className={`status-pill status-${status.toLowerCase()}`}>{label}</span>;
 }
 
 function TeamMark({ name }: { name: string }) {
@@ -188,15 +171,6 @@ function SectionTitle({
   );
 }
 
-function dayKey(date: Date) {
-  return new Intl.DateTimeFormat("en-CA", {
-    day: "2-digit",
-    month: "2-digit",
-    timeZone: "America/Lima",
-    year: "numeric",
-  }).format(date);
-}
-
 export default async function Home({ searchParams }: { searchParams?: HomeSearchParams }) {
   const query = searchParams ? await searchParams : {};
   const invitedByCode = normalizeCodeParam(query.ref);
@@ -205,7 +179,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   const authError = firstSearchParam(query.authError);
   const baseUrl = await getBaseUrl();
   const googleSession = await getGoogleSession();
-  const { config, participants, matches, auditLogs, leaderboard } = await getDashboardData();
+  const { config, participants, matches, leaderboard } = await getDashboardData();
   const registeredParticipant = registeredCode
     ? await prisma.participant.findUnique({
         where: { referralCode: registeredCode },
@@ -240,13 +214,11 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
     : null;
   const potCents = paidParticipants.length * config.entryFeeCents;
   const winnerCents = Math.floor((potCents * config.winnerShare) / 100);
-  const organizerCents = potCents - winnerCents;
   const now = new Date();
   const nextMatches = matches.filter((match) => match.status !== "FINISHED").slice(0, 8);
-  const todayMatches = matches.filter((match) => dayKey(match.startsAt) === dayKey(now));
+  const todayMatches = matches.filter((match) => peruDayKey(match.startsAt) === peruDayKey(now));
   const displayMatches = todayMatches.length > 0 ? todayMatches : nextMatches;
   const openMatches = nextMatches.filter((match) => match.startsAt > now);
-  const finishedMatches = matches.filter((match) => match.status === "FINISHED");
   const nextClose = openMatches[0]?.startsAt;
   const shouldOpenRegisterPanel = Boolean(invitedByCode || referralError || authError || registeredParticipant);
 
@@ -330,14 +302,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                   <CalendarClock size={16} />
                   <dt>Cierre</dt>
                   <dd>
-                    {nextClose
-                      ? new Intl.DateTimeFormat("es-PE", {
-                          day: "2-digit",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        }).format(nextClose)
-                      : "Por partido"}
+                    {nextClose ? formatPeruShortDateTime(nextClose) : "Por partido"}
                   </dd>
                 </div>
                 <div>
@@ -356,7 +321,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
         <a href="#ranking">Ranking</a>
         <a href="#participante">Pronosticos</a>
         <a href="#referidos">Referidos</a>
-        <a href="#organizador">Organizador</a>
+        <Link href="/admin">Admin</Link>
       </nav>
 
       <div className="app-shell">
@@ -517,14 +482,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
             icon={<CalendarClock size={20} />}
             label="Cierre proximo"
             value={
-              nextClose
-                ? new Intl.DateTimeFormat("es-PE", {
-                    day: "2-digit",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  }).format(nextClose)
-                : "Sin partidos"
+              nextClose ? formatPeruShortDateTime(nextClose) : "Sin partidos"
             }
             detail="Pronostico bloqueado al iniciar"
           />
@@ -643,10 +601,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                       </div>
 
                       <p className="match-date">
-                        {new Intl.DateTimeFormat("es-PE", {
-                          dateStyle: "medium",
-                          timeStyle: "short",
-                        }).format(match.startsAt)}
+                        {formatPeruDateTime(match.startsAt)}
                         {match.venue ? ` · ${match.venue}` : ""}
                       </p>
 
@@ -683,251 +638,6 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
           </div>
         </section>
 
-        <section className="admin-zone" id="organizador">
-          <SectionTitle
-            eyebrow="Zona privada"
-            title="Organizador"
-            description="Gestiona pagos, sincroniza fixture, carga partidos y cierra resultados."
-          />
-
-          <details className="admin-disclosure">
-            <summary>
-              <span>
-                <Lock size={18} />
-                Abrir panel organizador
-              </span>
-              <small>Requiere PIN en cada accion</small>
-            </summary>
-
-            <div className="admin-grid">
-              <div className="admin-card">
-                <div className="panel-header">
-                  <div>
-                    <h2>Pagos y API</h2>
-                    <p>Actualiza estados y sincroniza partidos reales con respaldo automatico.</p>
-                  </div>
-                  <Lock className="text-[var(--accent)]" size={22} />
-                </div>
-                <form action={syncMatches} className="admin-inline">
-                  <input name="adminPin" type="password" placeholder="PIN" required />
-                  <button className="secondary-button" type="submit">
-                    <RefreshCcw size={16} />
-                    Sincronizar API
-                  </button>
-                </form>
-                <div className="participant-list">
-                  {participants.map((participant) => (
-                    <form action={markPayment} className="participant-row" key={participant.id}>
-                      <input type="hidden" name="participantId" value={participant.id} />
-                      <div>
-                        <strong>{participant.name}</strong>
-                        <span>{participant.phone} · Acceso {participant.accessCode}</span>
-                        <span>Referido {participant.referralCode}</span>
-                        {participant.referredBy ? (
-                          <span>Invitado por {participant.referredBy.name}</span>
-                        ) : null}
-                        <span>
-                          {participant.referrals.length} referidos ·{" "}
-                          {participant.referrals.filter((referral) => referral.paymentStatus === "PAID").length} pagados
-                        </span>
-                        <StatusPill status={participant.paymentStatus} />
-                      </div>
-                      <select name="paymentStatus" defaultValue={participant.paymentStatus}>
-                        <option value="PENDING">Pendiente</option>
-                        <option value="PAID">Pagado</option>
-                        <option value="REJECTED">Observado</option>
-                      </select>
-                      <input name="paymentNote" placeholder="Nota pago" defaultValue={participant.paymentNote ?? ""} />
-                      <input name="adminPin" type="password" placeholder="PIN" required />
-                      <button className="secondary-button" type="submit">
-                        Actualizar
-                      </button>
-                    </form>
-                  ))}
-                </div>
-              </div>
-
-              <div className="admin-card">
-                <div className="panel-header">
-                  <div>
-                    <h2>Referidos</h2>
-                    <p>Controla quienes traen participantes y cuantos ya pagaron.</p>
-                  </div>
-                  <Share2 className="text-[var(--accent)]" size={22} />
-                </div>
-                <div className="compact-list">
-                  {referralLeaders.length === 0 ? (
-                    <p className="empty-text">Aun no hay referidos registrados.</p>
-                  ) : (
-                    referralLeaders.map((participant) => (
-                      <div className="referral-row" key={participant.id}>
-                        <div>
-                          <strong>{participant.name}</strong>
-                          <span>Codigo {participant.referralCode}</span>
-                          <ReferralShare baseUrl={baseUrl} code={participant.referralCode} name={participant.name} compact />
-                        </div>
-                        <div>
-                          <strong>{participant.paidReferrals}</strong>
-                          <span>{participant.totalReferrals} total</span>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              <div className="admin-card">
-                <div className="panel-header">
-                  <div>
-                    <h2>Auditoria reciente</h2>
-                    <p>Ultimos registros guardados localmente y estado de envio a Google.</p>
-                  </div>
-                  <ClipboardList className="text-[var(--accent)]" size={22} />
-                </div>
-                <div className="audit-list">
-                  {auditLogs.length === 0 ? (
-                    <p className="empty-text">Aun no hay eventos registrados.</p>
-                  ) : (
-                    auditLogs.map((log) => (
-                      <div className="audit-row" key={log.id}>
-                        <div>
-                          <strong>{log.event}</strong>
-                          <span>
-                            {log.actor ?? "sistema"} · {log.googleStatus}
-                          </span>
-                        </div>
-                        <time dateTime={log.createdAt.toISOString()}>
-                          {new Intl.DateTimeFormat("es-PE", {
-                            day: "2-digit",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            month: "short",
-                          }).format(log.createdAt)}
-                        </time>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <form action={testGoogleLogging} className="admin-inline audit-test-form">
-                  <input name="adminPin" placeholder="PIN organizador" type="password" />
-                  <button className="secondary-button" type="submit">
-                    Probar Google
-                  </button>
-                </form>
-              </div>
-
-              <div className="admin-card">
-                <div className="panel-header">
-                  <div>
-                    <h2>Cargar partido</h2>
-                    <p>Fallback manual cuando la API aun no tiene fixture completo.</p>
-                  </div>
-                </div>
-                <form action={createMatch} className="stacked-form">
-                  <div className="score-inputs">
-                    <label>
-                      Etapa
-                      <input name="stage" placeholder="Grupo A" required />
-                    </label>
-                    <label>
-                      Grupo
-                      <input name="groupName" placeholder="A" />
-                    </label>
-                  </div>
-                  <label>
-                    Equipo local
-                    <input name="homeTeam" placeholder="Mexico" required />
-                  </label>
-                  <label>
-                    Equipo visitante
-                    <input name="awayTeam" placeholder="Sudafrica" required />
-                  </label>
-                  <label>
-                    Fecha y hora
-                    <input name="startsAt" type="datetime-local" required />
-                  </label>
-                  <label>
-                    Sede opcional
-                    <input name="venue" placeholder="Estadio" />
-                  </label>
-                  <input name="adminPin" type="password" placeholder="PIN organizador" required />
-                  <button className="primary-button" type="submit">
-                    Crear partido
-                  </button>
-                </form>
-              </div>
-
-              <div className="admin-card">
-                <div className="panel-header">
-                  <div>
-                    <h2>Cerrar resultado</h2>
-                    <p>Al guardar, se recalculan los puntos del partido.</p>
-                  </div>
-                  <ClipboardList className="text-[var(--accent)]" size={22} />
-                </div>
-                <div className="result-list">
-                  {matches.slice(0, 10).map((match) => (
-                    <form action={updateMatchResult} className="result-row" key={match.id}>
-                      <input type="hidden" name="matchId" value={match.id} />
-                      <p>{match.homeTeam} vs {match.awayTeam}</p>
-                      <div className="score-inputs">
-                        <input
-                          aria-label={`Goles ${match.homeTeam}`}
-                          name="homeScore"
-                          type="number"
-                          min="0"
-                          max="30"
-                          defaultValue={match.homeScore ?? 0}
-                          required
-                        />
-                        <input
-                          aria-label={`Goles ${match.awayTeam}`}
-                          name="awayScore"
-                          type="number"
-                          min="0"
-                          max="30"
-                          defaultValue={match.awayScore ?? 0}
-                          required
-                        />
-                      </div>
-                      <input name="adminPin" type="password" placeholder="PIN" required />
-                      <button className="secondary-button" type="submit">Cerrar resultado</button>
-                    </form>
-                  ))}
-                </div>
-              </div>
-
-              <div className="admin-card">
-                <div className="panel-header">
-                  <div>
-                    <h2>Resultados cerrados</h2>
-                    <p>Partidos con puntajes ya recalculados.</p>
-                  </div>
-                </div>
-                <div className="compact-list">
-                  {finishedMatches.length === 0 ? (
-                    <p className="empty-text">Aun no hay resultados cerrados.</p>
-                  ) : (
-                    finishedMatches.map((match) => (
-                      <div className="compact-row" key={match.id}>
-                        <span>{match.homeTeam}</span>
-                        <strong>
-                          {match.homeScore} - {match.awayScore}
-                        </strong>
-                        <span>{match.awayTeam}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="organizer-share">
-              <span>Ganancia estimada del organizador</span>
-              <strong>{formatMoney(organizerCents, config.currency)}</strong>
-            </div>
-          </details>
-        </section>
       </div>
     </main>
   );

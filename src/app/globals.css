@@ -1175,6 +1175,78 @@ label {
   padding-top: 1.5rem;
 }
 
+.admin-page-shell {
+  display: grid;
+  gap: 1.5rem;
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 2rem;
+  width: 100%;
+}
+
+.admin-topbar {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.admin-summary-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.admin-login-shell {
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(5, 18, 35, 0.9), rgba(5, 18, 35, 0.66)),
+    url("/images/world-cup-trophy.png") center / cover;
+  display: grid;
+  min-height: 100vh;
+  padding: 1.25rem;
+}
+
+.admin-login-card {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: 8px;
+  box-shadow: 0 24px 80px rgba(5, 18, 35, 0.24);
+  color: var(--foreground);
+  display: grid;
+  gap: 1rem;
+  margin: 0 auto;
+  max-width: 420px;
+  padding: 1.5rem;
+  width: 100%;
+}
+
+.admin-login-card h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  line-height: 1;
+}
+
+.admin-login-card p {
+  color: var(--muted);
+}
+
+.eyebrow-text {
+  color: var(--accent) !important;
+  font-size: 0.76rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.form-alert {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.22);
+  border-radius: 8px;
+  color: #991b1b;
+  font-weight: 800;
+  padding: 0.8rem 0.9rem;
+}
+
 .admin-disclosure {
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -1459,6 +1531,7 @@ label {
 
   .hero-actions,
   .admin-inline,
+  .admin-summary-grid,
   .score-inputs {
     grid-template-columns: 1fr;
   }

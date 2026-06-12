@@ -87,6 +87,12 @@ Cuando el usuario entra con Google:
 - Si aun no esta inscrito, el formulario usa su nombre y correo como base.
 - Cada ingreso correcto genera un evento `auth.google_login` en auditoria local.
 
+## Panel organizador
+
+El panel privado vive en `/admin`. El organizador inicia sesion con el PIN configurado en `ADMIN_PIN`; la sesion queda firmada con `AUTH_SECRET` y permite aprobar pagos, sincronizar partidos, cargar partidos manuales y cerrar resultados sin repetir el PIN en cada accion.
+
+Los horarios visibles de partidos se muestran en hora peruana (`America/Lima`). Cuando se carga un partido manual desde el panel, el campo de fecha y hora se interpreta como hora peruana.
+
 ## Auditoria local
 
 El sistema guarda eventos en `AuditLog`: registros, referidos invalidos, pagos, pronosticos, partidos creados, resultados cerrados y sincronizaciones. El panel organizador muestra los ultimos eventos.

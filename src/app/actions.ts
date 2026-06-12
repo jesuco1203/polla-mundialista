@@ -1,12 +1,21 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import {
+  ADMIN_SESSION_COOKIE,
+  adminCookieOptions,
+  createAdminSessionCookie,
+  getAdminSession,
+  verifyAdminPin,
+} from "@/lib/admin-auth";
 import { logEvent } from "@/lib/audit-log";
 import { fetchWorldCupMatches } from "@/lib/football-api";
 import { getGoogleSession } from "@/lib/google-auth";
+import { parsePeruDateTimeInput } from "@/lib/date-format";
 import { makeAccessCode, scorePrediction } from "@/lib/scoring";
 
 const participantSchema = z.object({
@@ -32,17 +41,30 @@ const matchSchema = z.object({
   venue: z.string().trim().max(120).optional().or(z.literal("")),
 });
 
-function requireAdminPin(formData: FormData) {
-  const expected = process.env.ADMIN_PIN;
-  const received = String(formData.get("adminPin") ?? "");
+async function requireAdminAccess(formData?: FormData) {
+  if (await getAdminSession()) return;
 
-  if (!expected) {
-    throw new Error("Falta configurar ADMIN_PIN en el servidor.");
-  }
-
-  if (received !== expected) {
+  const received = String(formData?.get("adminPin") ?? "");
+  if (!received || !verifyAdminPin(received)) {
     throw new Error("PIN de organizador incorrecto.");
   }
+}
+
+export async function loginAdmin(formData: FormData) {
+  const pin = String(formData.get("adminPin") ?? "");
+  if (!pin || !verifyAdminPin(pin)) {
+    redirect("/admin?error=pin");
+  }
+
+  const cookieStore = await cookies();
+  cookieStore.set(ADMIN_SESSION_COOKIE, createAdminSessionCookie(), adminCookieOptions());
+  redirect("/admin");
+}
+
+export async function logoutAdmin() {
+  const cookieStore = await cookies();
+  cookieStore.delete(ADMIN_SESSION_COOKIE);
+  redirect("/admin");
 }
 
 async function makeUniqueParticipantCode(field: "accessCode" | "referralCode") {
@@ -197,7 +219,7 @@ export async function savePrediction(formData: FormData) {
 }
 
 export async function markPayment(formData: FormData) {
-  requireAdminPin(formData);
+  await requireAdminAccess(formData);
 
   const participantId = String(formData.get("participantId") ?? "");
   const paymentStatus = String(formData.get("paymentStatus") ?? "PENDING");
@@ -233,7 +255,7 @@ export async function markPayment(formData: FormData) {
 }
 
 export async function createMatch(formData: FormData) {
-  requireAdminPin(formData);
+  await requireAdminAccess(formData);
 
   const parsed = matchSchema.parse({
     stage: formData.get("stage"),
@@ -244,7 +266,7 @@ export async function createMatch(formData: FormData) {
     venue: formData.get("venue"),
   });
 
-  const startsAt = new Date(parsed.startsAt);
+  const startsAt = parsePeruDateTimeInput(parsed.startsAt);
   if (Number.isNaN(startsAt.getTime())) {
     throw new Error("Fecha de partido invalida.");
   }
@@ -278,7 +300,7 @@ export async function createMatch(formData: FormData) {
 }
 
 export async function updateMatchResult(formData: FormData) {
-  requireAdminPin(formData);
+  await requireAdminAccess(formData);
 
   const matchId = String(formData.get("matchId") ?? "");
   const homeScore = z.coerce.number().int().min(0).max(30).parse(formData.get("homeScore"));
@@ -327,7 +349,7 @@ export async function updateMatchResult(formData: FormData) {
 }
 
 export async function syncMatches(formData: FormData) {
-  requireAdminPin(formData);
+  await requireAdminAccess(formData);
   const syncResult = await fetchWorldCupMatches();
 
   for (const match of syncResult.matches) {
@@ -352,7 +374,7 @@ export async function syncMatches(formData: FormData) {
 }
 
 export async function testGoogleLogging(formData: FormData) {
-  requireAdminPin(formData);
+  await requireAdminAccess(formData);
 
   await logEvent({
     actor: "organizer",
