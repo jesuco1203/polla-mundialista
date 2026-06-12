@@ -704,7 +704,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 <div className="panel-header">
                   <div>
                     <h2>Pagos y API</h2>
-                    <p>Actualiza estados y sincroniza partidos reales cuando tengas la llave.</p>
+                    <p>Actualiza estados y sincroniza partidos reales con respaldo automatico.</p>
                   </div>
                   <Lock className="text-[var(--accent)]" size={22} />
                 </div>

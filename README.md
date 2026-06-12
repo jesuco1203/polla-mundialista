@@ -43,7 +43,7 @@ GOOGLE_CLIENT_ID=""
 GOOGLE_CLIENT_SECRET=""
 ```
 
-`API_FOOTBALL_KEY` habilita la sincronizacion desde API-Football. El adaptador actual consulta Mundial 2026 con `league=1&season=2026`.
+La sincronizacion de partidos usa dos fuentes gratis en cascada: `worldcup26.ir` como fuente principal y `openfootball/worldcup.json` como respaldo. `API_FOOTBALL_KEY` es opcional y solo activa API-Football como fuente extra si las fuentes gratis fallan.
 `GOOGLE_LOG_WEBHOOK_URL` envia una copia de auditoria a Google Sheets mediante Apps Script. Si queda vacio, la auditoria se guarda solo en SQLite.
 `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` habilitan el ingreso con Google. `AUTH_SECRET` firma la cookie de sesion y `APP_URL` debe apuntar al dominio publico.
 
@@ -63,6 +63,15 @@ docker compose up -d --build
 
 La base SQLite de produccion queda en el volumen `polla_data`.
 El contenedor inicializa el esquema con `prisma/init.sql` antes de arrancar.
+
+## Sincronizacion de partidos
+
+Desde el panel organizador, el boton `Sincronizar API` carga automaticamente los partidos del Mundial 2026. El orden de intento es:
+
+1. `worldcup26.ir`: fuente gratis principal con calendario, sedes, estados y resultados.
+2. `openfootball/worldcup.json`: respaldo gratis sin llave.
+3. `API-Football`: respaldo opcional si se configura `API_FOOTBALL_KEY`.
+4. Carga manual desde el panel si todas las fuentes externas fallan.
 
 ## Login con Google
 

@@ -328,9 +328,9 @@ export async function updateMatchResult(formData: FormData) {
 
 export async function syncMatches(formData: FormData) {
   requireAdminPin(formData);
-  const matches = await fetchWorldCupMatches();
+  const syncResult = await fetchWorldCupMatches();
 
-  for (const match of matches) {
+  for (const match of syncResult.matches) {
     await prisma.match.upsert({
       where: { externalId: match.externalId },
       update: match,
@@ -342,7 +342,8 @@ export async function syncMatches(formData: FormData) {
     actor: "organizer",
     event: "matches.synced",
     payload: {
-      count: matches.length,
+      count: syncResult.matches.length,
+      source: syncResult.source,
     },
     targetType: "Match",
   });
