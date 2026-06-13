@@ -352,6 +352,7 @@ export async function savePrediction(formData: FormData) {
   });
 
   revalidatePath("/");
+  redirect("/?predictionNotice=saved#participante");
 }
 
 export async function markPayment(formData: FormData) {

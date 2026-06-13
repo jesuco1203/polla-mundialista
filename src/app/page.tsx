@@ -261,13 +261,14 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
   );
   const activeParticipant = googleParticipant ?? sessionParticipant ?? registeredParticipant;
   const activeParticipantId = activeParticipant?.id ?? null;
-  const myPredictions = activeParticipantId
+  const rawMyPredictions = activeParticipantId
     ? await prisma.prediction.findMany({
         where: { participantId: activeParticipantId },
         include: { match: true },
         orderBy: { updatedAt: "desc" },
       })
     : [];
+  const myPredictions = rawMyPredictions.filter((prediction) => prediction.match);
   const predictionsByDay = myPredictions.reduce<Array<{ date: string; predictions: typeof myPredictions }>>(
     (days, prediction) => {
       const date = matchDateParts(prediction.match.startsAt).date;
@@ -720,6 +721,14 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 <div>
                   <strong>No encontramos ese partido.</strong>
                   <span>Recarga la pagina y vuelve a intentarlo con un partido disponible.</span>
+                </div>
+              </div>
+            ) : null}
+            {predictionNotice === "saved" ? (
+              <div className="prediction-login-alert">
+                <div>
+                  <strong>Pronostico guardado.</strong>
+                  <span>Tu marcador ya quedo registrado en tu historial.</span>
                 </div>
               </div>
             ) : null}
