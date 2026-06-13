@@ -40,6 +40,7 @@ import {
   getReferralBonus,
 } from "@/lib/referral-bonus";
 import { formatMoney } from "@/lib/scoring";
+import { teamNameEs } from "@/lib/team-names";
 
 export const dynamic = "force-dynamic";
 
@@ -164,26 +165,6 @@ function TeamMark({ name }: { name: string }) {
     .toUpperCase();
 
   return <span className="team-mark" aria-hidden="true">{initials || "?"}</span>;
-}
-
-function teamCode(name: string) {
-  const normalized = name.toLowerCase();
-  const knownCodes: Record<string, string> = {
-    "bosnia and herzegovina": "BIH",
-    canada: "CAN",
-    paraguay: "PAR",
-    "saudi arabia": "KSA",
-    spain: "ESP",
-    "united states": "USA",
-  };
-
-  return knownCodes[normalized] ?? name
-    .split(" ")
-    .filter(Boolean)
-    .map((word) => word[0])
-    .join("")
-    .slice(0, 3)
-    .toUpperCase();
 }
 
 function matchDateParts(startsAt: Date) {
@@ -726,6 +707,22 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 </div>
               </div>
             ) : null}
+            {predictionNotice === "locked" ? (
+              <div className="prediction-login-alert">
+                <div>
+                  <strong>Ese partido ya cerro pronosticos.</strong>
+                  <span>Elige un partido que siga abierto para guardar tu marcador.</span>
+                </div>
+              </div>
+            ) : null}
+            {predictionNotice === "match_not_found" ? (
+              <div className="prediction-login-alert">
+                <div>
+                  <strong>No encontramos ese partido.</strong>
+                  <span>Recarga la pagina y vuelve a intentarlo con un partido disponible.</span>
+                </div>
+              </div>
+            ) : null}
             <div className="match-grid">
               {displayMatches.length === 0 ? (
                 <p className="empty-text">No hay partidos pendientes cargados.</p>
@@ -733,6 +730,8 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                 displayMatches.map((match) => {
                   const locked = match.startsAt <= now;
                   const dateParts = matchDateParts(match.startsAt);
+                  const homeTeam = teamNameEs(match.homeTeam);
+                  const awayTeam = teamNameEs(match.awayTeam);
 
                   return (
                     <form action={savePrediction} className={locked ? "match-card locked" : "match-card"} key={match.id}>
@@ -755,15 +754,15 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                       <div className="teams-row">
                         <div className="team-side">
                           <span className="team-identity">
-                            <TeamMark name={match.homeTeam} />
-                            <strong>{teamCode(match.homeTeam)}</strong>
+                            <TeamMark name={homeTeam} />
+                            <strong>{homeTeam}</strong>
                           </span>
                         </div>
                         <span className="versus">vs</span>
                         <div className="team-side right">
                           <span className="team-identity">
-                            <TeamMark name={match.awayTeam} />
-                            <strong>{teamCode(match.awayTeam)}</strong>
+                            <TeamMark name={awayTeam} />
+                            <strong>{awayTeam}</strong>
                           </span>
                         </div>
                       </div>
@@ -789,7 +788,7 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                           </div>
                           <Info size={19} aria-hidden="true" />
                         </div>
-                        <ScoreStepper homeTeam={match.homeTeam} awayTeam={match.awayTeam} locked={locked} />
+                        <ScoreStepper homeTeam={homeTeam} awayTeam={awayTeam} locked={locked} />
                         {activeParticipant ? (
                           <p className="helper-text">
                             Pronosticas como {activeParticipant.name}.
@@ -831,10 +830,13 @@ export default async function Home({ searchParams }: { searchParams?: HomeSearch
                             <div className="prediction-history-row" key={prediction.id}>
                               <div>
                                 <strong>
-                                  {teamCode(prediction.match.homeTeam)} {prediction.homeScore} - {prediction.awayScore}{" "}
-                                  {teamCode(prediction.match.awayTeam)}
+                                  {teamNameEs(prediction.match.homeTeam)} {prediction.homeScore} - {prediction.awayScore}{" "}
+                                  {teamNameEs(prediction.match.awayTeam)}
                                 </strong>
-                                <span>{dateParts.time} · {prediction.match.homeTeam} vs {prediction.match.awayTeam}</span>
+                                <span>
+                                  {dateParts.time} · {teamNameEs(prediction.match.homeTeam)} vs{" "}
+                                  {teamNameEs(prediction.match.awayTeam)}
+                                </span>
                               </div>
                               <small>{resolved ? `+${prediction.points} pts` : "Pendiente"}</small>
                             </div>

@@ -28,6 +28,7 @@ import { formatPeruShortDateTime } from "@/lib/date-format";
 import { prisma } from "@/lib/prisma";
 import { REFERRAL_INVITE_LIMIT, REFERRER_BONUS_POINTS } from "@/lib/referral-bonus";
 import { formatMoney } from "@/lib/scoring";
+import { teamNameEs } from "@/lib/team-names";
 
 export const dynamic = "force-dynamic";
 
@@ -319,7 +320,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Admin
               ) : (
                 participantInsights.map((participant) => {
                   const latestPayload = participant.latestPrediction
-                    ? `${participant.latestPrediction.match.homeTeam} ${participant.latestPrediction.homeScore} - ${participant.latestPrediction.awayScore} ${participant.latestPrediction.match.awayTeam}`
+                    ? `${teamNameEs(participant.latestPrediction.match.homeTeam)} ${participant.latestPrediction.homeScore} - ${participant.latestPrediction.awayScore} ${teamNameEs(participant.latestPrediction.match.awayTeam)}`
                     : "Sin pronosticos todavia";
 
                   return (
@@ -544,11 +545,11 @@ export default async function AdminPage({ searchParams }: { searchParams?: Admin
               </div>
               <label>
                 Equipo local
-                <input name="homeTeam" placeholder="Mexico" required />
+                <input name="homeTeam" placeholder="México" required />
               </label>
               <label>
                 Equipo visitante
-                <input name="awayTeam" placeholder="Sudafrica" required />
+                <input name="awayTeam" placeholder="Sudáfrica" required />
               </label>
               <label>
                 Fecha y hora peruana
@@ -577,12 +578,12 @@ export default async function AdminPage({ searchParams }: { searchParams?: Admin
                 <form action={updateMatchResult} className="result-row" key={match.id}>
                   <input type="hidden" name="matchId" value={match.id} />
                   <p>
-                    {match.homeTeam} vs {match.awayTeam}
+                    {teamNameEs(match.homeTeam)} vs {teamNameEs(match.awayTeam)}
                     <span>{formatPeruShortDateTime(match.startsAt)}</span>
                   </p>
                   <div className="score-inputs">
                     <input
-                      aria-label={`Goles ${match.homeTeam}`}
+                      aria-label={`Goles ${teamNameEs(match.homeTeam)}`}
                       name="homeScore"
                       type="number"
                       min="0"
@@ -591,7 +592,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Admin
                       required
                     />
                     <input
-                      aria-label={`Goles ${match.awayTeam}`}
+                      aria-label={`Goles ${teamNameEs(match.awayTeam)}`}
                       name="awayScore"
                       type="number"
                       min="0"
@@ -619,11 +620,11 @@ export default async function AdminPage({ searchParams }: { searchParams?: Admin
               ) : (
                 finishedMatches.map((match) => (
                   <div className="compact-row" key={match.id}>
-                    <span>{match.homeTeam}</span>
+                    <span>{teamNameEs(match.homeTeam)}</span>
                     <strong>
                       {match.homeScore} - {match.awayScore}
                     </strong>
-                    <span>{match.awayTeam}</span>
+                    <span>{teamNameEs(match.awayTeam)}</span>
                   </div>
                 ))
               )}

@@ -1,3 +1,5 @@
+import { teamNameEs } from "@/lib/team-names";
+
 type ApiSportsFixture = {
   fixture: {
     id: number;
@@ -159,8 +161,8 @@ async function fetchFromWorldCup26(): Promise<MatchSyncResult> {
       externalId: `wc2026-${padMatchId(game.id)}`,
       stage: game.type === "group" ? `Grupo ${game.group ?? ""}`.trim() : game.type,
       groupName: game.group || null,
-      homeTeam: game.home_team_name_en || "Por definir",
-      awayTeam: game.away_team_name_en || "Por definir",
+      homeTeam: teamNameEs(game.home_team_name_en || "Por definir"),
+      awayTeam: teamNameEs(game.away_team_name_en || "Por definir"),
       startsAt: parseWorldCup26Date(game.local_date, stadium),
       status: isFinished ? "FINISHED" : isLive ? "LIVE" : "SCHEDULED",
       homeScore: isFinished ? homeScore : null,
@@ -192,8 +194,8 @@ async function fetchFromOpenFootball(): Promise<MatchSyncResult> {
     externalId: `wc2026-${padMatchId(index + 1)}`,
     stage: match.group ?? match.round ?? "Mundial 2026",
     groupName: groupFromRound(match.group),
-    homeTeam: match.team1,
-    awayTeam: match.team2,
+    homeTeam: teamNameEs(match.team1),
+    awayTeam: teamNameEs(match.team2),
     startsAt: match.startsAt,
     status: match.score?.ft ? "FINISHED" : "SCHEDULED",
     homeScore: match.score?.ft?.[0] ?? null,
@@ -228,8 +230,8 @@ async function fetchFromApiFootball(): Promise<MatchSyncResult> {
     externalId: `api-football-${item.fixture.id}`,
     stage: item.league.round ?? "Mundial 2026",
     groupName: groupFromRound(item.league.round),
-    homeTeam: item.teams.home.name,
-    awayTeam: item.teams.away.name,
+    homeTeam: teamNameEs(item.teams.home.name),
+    awayTeam: teamNameEs(item.teams.away.name),
     startsAt: new Date(item.fixture.date),
     status: statusMap[item.fixture.status.short] ?? "SCHEDULED",
     homeScore: item.goals.home,

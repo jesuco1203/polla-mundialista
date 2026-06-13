@@ -27,6 +27,7 @@ import {
 import { parsePeruDateTimeInput, peruDayKey } from "@/lib/date-format";
 import { REFERRAL_INVITE_LIMIT } from "@/lib/referral-bonus";
 import { makeAccessCode, scorePrediction } from "@/lib/scoring";
+import { teamNameEs } from "@/lib/team-names";
 
 const participantSchema = z.object({
   name: z.string().trim().min(2).max(80),
@@ -310,9 +311,11 @@ export async function savePrediction(formData: FormData) {
   }
 
   const match = await prisma.match.findUnique({ where: { id: parsed.matchId } });
-  if (!match) throw new Error("Partido no encontrado.");
+  if (!match) {
+    redirect("/?predictionNotice=match_not_found#participante");
+  }
   if (match.startsAt <= new Date()) {
-    throw new Error("Este partido ya esta bloqueado.");
+    redirect("/?predictionNotice=locked#participante");
   }
 
   const prediction = await prisma.prediction.upsert({
@@ -457,8 +460,8 @@ export async function createMatch(formData: FormData) {
     data: {
       stage: parsed.stage,
       groupName: parsed.groupName || null,
-      homeTeam: parsed.homeTeam,
-      awayTeam: parsed.awayTeam,
+      homeTeam: teamNameEs(parsed.homeTeam),
+      awayTeam: teamNameEs(parsed.awayTeam),
       startsAt,
       venue: parsed.venue || null,
     },
