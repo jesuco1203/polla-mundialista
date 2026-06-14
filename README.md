@@ -51,6 +51,8 @@ La sincronizacion de partidos usa dos fuentes gratis en cascada: `worldcup26.ir`
 
 ## Despliegue Docker
 
+El despliegue de produccion esta conectado a GitHub desde la rama `main` en Dokploy.
+
 ```bash
 export ADMIN_PIN="pon-un-pin-largo"
 export API_FOOTBALL_KEY="opcional"
