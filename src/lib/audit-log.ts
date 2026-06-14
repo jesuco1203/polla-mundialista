@@ -57,14 +57,18 @@ export async function logEvent({ actor = null, event, payload = {}, targetId = n
     console.error("Google log webhook failed", error);
   }
 
-  await prisma.auditLog.create({
-    data: {
-      actor,
-      event,
-      googleStatus,
-      payloadJson: JSON.stringify(safePayload),
-      targetId,
-      targetType,
-    },
-  });
+  try {
+    await prisma.auditLog.create({
+      data: {
+        actor,
+        event,
+        googleStatus,
+        payloadJson: JSON.stringify(safePayload),
+        targetId,
+        targetType,
+      },
+    });
+  } catch (error) {
+    console.error("Audit log persistence failed", error);
+  }
 }
