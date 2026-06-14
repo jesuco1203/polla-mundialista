@@ -2,8 +2,8 @@ services:
   web:
     build: .
     restart: unless-stopped
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     environment:
       DATABASE_URL: "file:/data/prod.db"
       ADMIN_PIN: "${ADMIN_PIN:?Configura ADMIN_PIN antes de desplegar}"
