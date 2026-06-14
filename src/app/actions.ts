@@ -279,7 +279,7 @@ export async function completeGoogleParticipantPhone(formData: FormData) {
 
 export async function savePrediction(formData: FormData) {
   const parsed = predictionSchema.parse({
-    accessCode: formData.get("accessCode"),
+    accessCode: formData.get("accessCode") ?? "",
     matchId: formData.get("matchId"),
     homeScore: formData.get("homeScore"),
     awayScore: formData.get("awayScore"),
